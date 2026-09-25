@@ -47,6 +47,17 @@ async function start() {
     res.json({ status: 'ok', timestamp: new Date() });
   });
 
+  app.get('/api/health', async (req, res) => {
+    try {
+      const { query } = require('./config/db');
+      await query('SELECT 1');
+      res.json({ status: 'ok', database: 'ok', timestamp: new Date() });
+    } catch (error) {
+      console.error('Health check failed:', error.message);
+      res.status(503).json({ status: 'error', database: 'unavailable' });
+    }
+  });
+
   const locationRoutes = require('./routes/locations');
   const reservationRoutes = require('./routes/reservations');
   const packageRoutes = require('./routes/packages');
