@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "jsx": "preserve",
+    "allowJs": true,
+    "checkJs": false,
+    "incremental": true,
+    "plugins": [{ "name": "next" }],
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "target": "ES2017"
+  },
+  "include": ["next-env.d.ts", "**/*.js", "**/*.jsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}
