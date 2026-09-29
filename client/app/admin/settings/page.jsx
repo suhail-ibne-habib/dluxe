@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label";
 
 const schema = z.object({
   whatsapp: z.string().min(6, "Enter a WhatsApp number"),
+  contact_phone: z.string().optional(),
+  contact_email: z.union([z.literal(""), z.string().email("Enter a valid email")]).optional(),
   smtp_host: z.string().min(1, "SMTP host is required"),
   smtp_port: z.coerce.number().min(1, "Port is required"),
   smtp_secure: z.boolean(),
@@ -27,6 +29,8 @@ export default function SettingsPage() {
     resolver: zodResolver(schema),
     defaultValues: {
       whatsapp: "",
+      contact_phone: "",
+      contact_email: "",
       smtp_host: "",
       smtp_port: 587,
       smtp_secure: false,
@@ -41,6 +45,8 @@ export default function SettingsPage() {
       setPassSet(Boolean(data.smtp_pass_set));
       form.reset({
         whatsapp: data.whatsapp || data.whatsapp_number || "",
+        contact_phone: data.contact_phone || "",
+        contact_email: data.contact_email || "",
         smtp_host: data.smtp_host || "",
         smtp_port: Number(data.smtp_port || 587),
         smtp_secure: data.smtp_secure === true || data.smtp_secure === "true",
@@ -57,6 +63,8 @@ export default function SettingsPage() {
     const payload = {
       whatsapp: values.whatsapp,
       whatsapp_number: values.whatsapp,
+      contact_phone: values.contact_phone || "",
+      contact_email: values.contact_email || "",
       smtp_host: values.smtp_host,
       smtp_port: String(values.smtp_port),
       smtp_secure: values.smtp_secure ? "true" : "false",
@@ -78,14 +86,23 @@ export default function SettingsPage() {
     <form onSubmit={form.handleSubmit(onSubmit)} className="grid max-w-2xl gap-4">
       <Card>
         <CardHeader>
-          <CardTitle>WhatsApp</CardTitle>
-          <CardDescription>Shown on the public site.</CardDescription>
+          <CardTitle>Contact</CardTitle>
+          <CardDescription>Shown in the header, booking page, and WhatsApp button. Empty fields show demo text.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-1">
-            <Label>Number</Label>
-            <Input {...form.register("whatsapp")} />
+        <CardContent className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1 sm:col-span-2">
+            <Label>WhatsApp number</Label>
+            <Input {...form.register("whatsapp")} placeholder="+1 555 123 4567" />
             {form.formState.errors.whatsapp && <p className="text-sm text-destructive">{form.formState.errors.whatsapp.message}</p>}
+          </div>
+          <div className="space-y-1">
+            <Label>Phone</Label>
+            <Input {...form.register("contact_phone")} placeholder="Uses the WhatsApp number when empty" />
+          </div>
+          <div className="space-y-1">
+            <Label>Email</Label>
+            <Input type="email" {...form.register("contact_email")} placeholder="reservations@yourdomain.com" />
+            {form.formState.errors.contact_email && <p className="text-sm text-destructive">{form.formState.errors.contact_email.message}</p>}
           </div>
         </CardContent>
       </Card>

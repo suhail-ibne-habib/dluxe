@@ -1,28 +1,12 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useContact } from "@/lib/use-contact";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('590690695079');
-  const [displayNumber, setDisplayNumber] = useState('+590 690 69 50 79');
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await fetch(`/api/settings`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.whatsapp) {
-            setPhoneNumber(data.whatsapp.replace(/[^\d+]/g, ''));
-            setDisplayNumber(data.whatsapp);
-          }
-        }
-      } catch (e) { }
-    };
-    fetchSettings();
-  }, []);
-
-  const waLink = phoneNumber ? `https://wa.me/${phoneNumber.replace('+', '')}` : '#';
+  const contact = useContact();
+  const waLink = contact.whatsappHref;
+  const displayNumber = contact.whatsapp;
 
   return (
     <>

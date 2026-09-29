@@ -74,6 +74,9 @@ router.get('/:key', async (req, res) => {
 
 // PUT / UPDATE multiple settings
 router.put('/', async (req, res) => {
+  if (req.authUser?.role !== 'admin') {
+    return res.status(401).json({ message: 'Admin session required' });
+  }
   try {
     const settings = req.body; // Expects an object { key: 'value', ... }
     
