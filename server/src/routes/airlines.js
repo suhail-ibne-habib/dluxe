@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { query, execute } = require('../config/db');
+const { db, nextId, num } = require('../config/db');
 
 router.get('/', async (req, res) => {
   try {
-    const airlines = await query('SELECT id, name, code, is_active AS isActive FROM airlines ORDER BY name ASC');
+    const airlines = await db().collection('airlines').find({}, { projection: { _id: 0 } }).sort({ name: 1 }).toArray();
     res.json(airlines);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -13,37 +13,42 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { name, code, isActive } = req.body;
-    if (!name || !String(name).trim()) return res.status(400).json({ message: 'Airline name is required' });
-    const result = await execute(
-      'INSERT INTO airlines (name, code, is_active) VALUES (?, ?, ?)',
-      [String(name).trim(), code ? String(code).trim().toUpperCase() : null, isActive === false ? 0 : 1]
-    );
-    res.status(201).json({ id: result.insertId, message: 'Airline created' });
+    const name = String(req.body.name || '').trim();
+    if (!name) return res.status(400).json({ message: 'Airline name is required' });
+    const existing = await db().collection('airlines').findOne({ name });
+    if (existing) return res.status(400).json({ message: 'That airline already exists' });
+    const id = await nextId('airlines');
+    await db().collection('airlines').insertOne({
+      id,
+      name,
+      code: req.body.code ? String(req.body.code).trim().toUpperCase() : null,
+      isActive: req.body.isActive !== false,
+    });
+    res.status(201).json({ id, message: 'Airline created' });
   } catch (error) {
-    if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ message: 'That airline already exists' });
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 router.put('/:id', async (req, res) => {
   try {
-    const { name, code, isActive } = req.body;
-    if (!name || !String(name).trim()) return res.status(400).json({ message: 'Airline name is required' });
-    await execute(
-      'UPDATE airlines SET name = ?, code = ?, is_active = ? WHERE id = ?',
-      [String(name).trim(), code ? String(code).trim().toUpperCase() : null, isActive ? 1 : 0, req.params.id]
+    const name = String(req.body.name || '').trim();
+    if (!name) return res.status(400).json({ message: 'Airline name is required' });
+    const duplicate = await db().collection('airlines').findOne({ name, id: { $ne: num(req.params.id) } });
+    if (duplicate) return res.status(400).json({ message: 'That airline already exists' });
+    await db().collection('airlines').updateOne(
+      { id: num(req.params.id) },
+      { $set: { name, code: req.body.code ? String(req.body.code).trim().toUpperCase() : null, isActive: Boolean(req.body.isActive) } }
     );
     res.json({ message: 'Airline updated' });
   } catch (error) {
-    if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ message: 'That airline already exists' });
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 router.delete('/:id', async (req, res) => {
   try {
-    await execute('DELETE FROM airlines WHERE id = ?', [req.params.id]);
+    await db().collection('airlines').deleteOne({ id: num(req.params.id) });
     res.json({ message: 'Airline deleted' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

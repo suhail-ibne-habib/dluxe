@@ -1,12 +1,12 @@
 const nodemailer = require('nodemailer');
-const { query } = require('../config/db');
+const { db } = require('../config/db');
 require('dotenv').config();
 
 const getTransporter = async () => {
   let settings = {};
   try {
-    const results = await query('SELECT setting_key, setting_value FROM settings');
-    results.forEach(row => { settings[row.setting_key] = row.setting_value; });
+    const results = await db().collection('settings').find({}).toArray();
+    results.forEach(row => { settings[row.key] = row.value; });
   } catch (e) {
     console.error('[MAILER] Warning: Failed to fetch settings from DB. Using .env fallback', e);
   }
@@ -83,10 +83,8 @@ const sendWelcomeEmail = async (email, name, password) => {
     // Attempt fetching MAIL_FROM from DB
     let mailFrom = `"D'LUXE" <no-reply@dluxe.com>`;
     try {
-        const fromSetting = await query('SELECT setting_value FROM settings WHERE setting_key = "mail_from"');
-        if (fromSetting.length > 0 && fromSetting[0].setting_value) {
-            mailFrom = fromSetting[0].setting_value;
-        }
+        const fromSetting = await db().collection('settings').findOne({ key: 'mail_from' });
+        if (fromSetting?.value) mailFrom = fromSetting.value;
     } catch(e) {}
 
     const info = await transporter.sendMail({
@@ -161,10 +159,8 @@ const sendLeadEmail = async (email, serviceType, packages) => {
     // Attempt fetching MAIL_FROM from DB
     let mailFrom = `"D'LUXE" <no-reply@dluxe.com>`;
     try {
-        const fromSetting = await query('SELECT setting_value FROM settings WHERE setting_key = "mail_from"');
-        if (fromSetting.length > 0 && fromSetting[0].setting_value) {
-            mailFrom = fromSetting[0].setting_value;
-        }
+        const fromSetting = await db().collection('settings').findOne({ key: 'mail_from' });
+        if (fromSetting?.value) mailFrom = fromSetting.value;
     } catch(e) {}
 
     const info = await transporter.sendMail({

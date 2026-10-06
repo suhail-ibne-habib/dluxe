@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { query, execute } = require('../config/db');
+const { db, nextId, num } = require('../config/db');
 const { sendLeadEmail } = require('../utils/mailer');
 
 router.get('/', async (req, res) => {
   try {
-    const leads = await query('SELECT *, id as _id FROM leads ORDER BY created_at DESC');
-    res.json(leads);
+    const leads = await db().collection('leads').find({}, { projection: { _id: 0 } }).sort({ created_at: -1 }).toArray();
+    res.json(leads.map((lead) => ({ ...lead, _id: lead.id })));
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -14,10 +14,9 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    const leads = await query('SELECT *, id as _id FROM leads WHERE id = ?', [id]);
-    if (leads.length === 0) return res.status(404).json({ message: 'Lead not found' });
-    res.json(leads[0]);
+    const lead = await db().collection('leads').findOne({ id: num(req.params.id) }, { projection: { _id: 0 } });
+    if (!lead) return res.status(404).json({ message: 'Lead not found' });
+    res.json({ ...lead, _id: lead.id });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -26,82 +25,56 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const data = req.body;
-    const sql = `
-      INSERT INTO leads (email, airport, service_type, date, passengers, status)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `;
-    const params = [
-      data.email,
-      data.airport,
-      data.serviceType || data.service_type,
-      data.date,
-      data.passengers,
-      data.status || 'Inquiry'
-    ];
-    
-    const result = await execute(sql, params);
-    
-    // Dispatch automated lead pricing inquiry email
+    const id = await nextId('leads');
+    await db().collection('leads').insertOne({
+      id,
+      email: data.email,
+      airport: data.airport || '',
+      service_type: data.serviceType || data.service_type || '',
+      date: data.date || null,
+      passengers: data.passengers || 1,
+      status: data.status || 'Inquiry',
+      created_at: new Date(),
+    });
+
     if (data.email) {
       try {
-         let activePackages = await query('SELECT * FROM service_packages WHERE is_active = 1');
-
-         if (data.airport) {
-             const airportRes = await query('SELECT id FROM airports WHERE name = ?', [data.airport]);
-             if (airportRes.length > 0) {
-                 const airportId = airportRes[0].id;
-                 const customQuery = `
-                     SELECT sp.*, COALESCE(app.custom_price, sp.base_price) as custom_base_price 
-                     FROM service_packages sp
-                     LEFT JOIN airport_package_pricing app ON app.package_id = sp.id AND app.airport_id = ?
-                     LEFT JOIN airport_excluded_packages aep ON aep.package_id = sp.id AND aep.airport_id = ?
-                     WHERE sp.is_active = 1 AND aep.package_id IS NULL
-                 `;
-                 const customPackages = await query(customQuery, [airportId, airportId]);
-                 activePackages = customPackages.map(p => ({
-                     ...p,
-                     base_price: p.custom_base_price
-                 }));
-             }
-         }
-
-         await sendLeadEmail(data.email, data.serviceType || data.service_type, activePackages);
+        let packages = await db().collection('packages').find({ isActive: true }).toArray();
+        if (data.airport) {
+          const location = await db().collection('locations').findOne({ 'airports.name': data.airport });
+          const airport = location?.airports?.find((item) => item.name === data.airport);
+          if (airport) {
+            const hidden = new Set((airport.excludedPackages || []).map(Number));
+            packages = packages.filter((item) => !hidden.has(Number(item.id))).map((item) => {
+              const custom = (airport.customPricing || []).find((price) => Number(price.package_id) === Number(item.id));
+              return { ...item, base_price: custom?.custom_price || item.basePrice };
+            });
+          }
+        }
+        await sendLeadEmail(data.email, data.serviceType || data.service_type, packages.map((item) => ({ ...item, base_price: item.base_price || item.basePrice })));
       } catch (mailError) {
-         console.error('Lead Mailer error:', mailError);
+        console.error('Lead Mailer error:', mailError);
       }
     }
 
-    res.status(201).json({ id: result.insertId, message: 'Lead added successfully' });
+    res.status(201).json({ id, message: 'Lead added successfully' });
   } catch (error) {
-    console.error('Lead error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 async function updateLeadStatus(req, res) {
   try {
-    const { id } = req.params;
     const data = req.body;
-    const mapping = {
-      email: 'email',
-      airport: 'airport',
-      service_type: 'service_type',
-      serviceType: 'service_type',
-      date: 'date',
-      passengers: 'passengers',
-      status: 'status',
-    };
-    const fields = [];
-    const params = [];
-    for (const [key, column] of Object.entries(mapping)) {
-      if (data[key] !== undefined) {
-        fields.push(`${column} = ?`);
-        params.push(data[key] === '' ? null : data[key]);
-      }
-    }
-    if (fields.length === 0) return res.status(400).json({ message: 'No fields provided' });
-    params.push(id);
-    await execute(`UPDATE leads SET ${fields.join(', ')} WHERE id = ?`, params);
+    const update = {};
+    if (data.email !== undefined) update.email = data.email;
+    if (data.airport !== undefined) update.airport = data.airport;
+    if (data.service_type !== undefined || data.serviceType !== undefined) update.service_type = data.service_type || data.serviceType;
+    if (data.date !== undefined) update.date = data.date;
+    if (data.passengers !== undefined) update.passengers = data.passengers;
+    if (data.status !== undefined) update.status = data.status;
+    if (!Object.keys(update).length) return res.status(400).json({ message: 'No fields provided' });
+    await db().collection('leads').updateOne({ id: num(req.params.id) }, { $set: update });
     res.json({ message: 'Lead updated successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -113,8 +86,7 @@ router.patch('/:id', updateLeadStatus);
 
 router.delete('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    await execute('DELETE FROM leads WHERE id = ?', [id]);
+    await db().collection('leads').deleteOne({ id: num(req.params.id) });
     res.json({ message: 'Lead deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

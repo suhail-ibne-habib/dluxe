@@ -1,31 +1,20 @@
+import { createRequire } from "module";
 import { betterAuth } from "better-auth";
+import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { admin, bearer } from "better-auth/plugins";
-import { createPool } from "mysql2/promise";
 import nodemailer from "nodemailer";
+
+const require = createRequire(import.meta.url);
+const { client, db } = require("./config/db");
 
 const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 const baseURL = process.env.BETTER_AUTH_URL || `http://localhost:${process.env.PORT || 5000}`;
 
-const pool = createPool({
-  host: process.env.DB_HOST || "127.0.0.1",
-  port: Number(process.env.DB_PORT || 3306),
-  user: process.env.DB_USER || "dluxe",
-  password: process.env.DB_PASSWORD || "dluxe",
-  database: process.env.DB_NAME || "dluxe",
-  timezone: "Z",
-  connectionLimit: 5,
-  maxIdle: 1,
-  idleTimeout: 15000,
-  connectTimeout: 10000,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 10000,
-});
-
 async function sendAuthEmail({ to, subject, html, text }) {
-  const [rows] = await pool.query(
-    "SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('smtp_host','smtp_port','smtp_secure','smtp_user','smtp_pass','mail_from')"
-  );
-  const settings = Object.fromEntries(rows.map((row) => [row.setting_key, row.setting_value]));
+  const rows = await db().collection("settings").find({
+    key: { $in: ["smtp_host", "smtp_port", "smtp_secure", "smtp_user", "smtp_pass", "mail_from"] },
+  }).toArray();
+  const settings = Object.fromEntries(rows.map((row) => [row.key, row.value]));
   const user = settings.smtp_user || process.env.SMTP_USER;
   const pass = (settings.smtp_pass || process.env.SMTP_PASS || "").replace(/^"|"$/g, "");
   if (!user || !pass) {
@@ -53,7 +42,7 @@ export const auth = betterAuth({
   baseURL,
   secret: process.env.BETTER_AUTH_SECRET || process.env.JWT_SECRET,
   trustedOrigins: [frontendUrl],
-  database: pool,
+  database: mongodbAdapter(db(), { client }),
   emailAndPassword: {
     enabled: true,
     revokeSessionsOnPasswordReset: true,
@@ -73,16 +62,10 @@ export async function ensureAdminAccount() {
   const email = process.env.ADMIN_EMAIL || "suhailibnehabib@gmail.com";
   const password = process.env.ADMIN_PASSWORD || "123@suhail";
 
-  await pool.query("ALTER TABLE `user` ADD COLUMN IF NOT EXISTS `role` varchar(255) DEFAULT 'user'");
-  await pool.query("ALTER TABLE `user` ADD COLUMN IF NOT EXISTS `banned` tinyint(1) DEFAULT 0");
-  await pool.query("ALTER TABLE `user` ADD COLUMN IF NOT EXISTS `banReason` text");
-  await pool.query("ALTER TABLE `user` ADD COLUMN IF NOT EXISTS `banExpires` datetime(3) NULL");
-  await pool.query("ALTER TABLE `session` ADD COLUMN IF NOT EXISTS `impersonatedBy` varchar(255) NULL");
-
-  const [rows] = await pool.query("SELECT id, role FROM `user` WHERE email = ? LIMIT 1", [email]);
-  if (rows.length > 0) {
-    if (rows[0].role !== "admin") {
-      await pool.query("UPDATE `user` SET role = 'admin' WHERE id = ?", [rows[0].id]);
+  const existing = await db().collection("user").findOne({ email });
+  if (existing) {
+    if (existing.role !== "admin") {
+      await db().collection("user").updateOne({ email }, { $set: { role: "admin" } });
       console.log(`Promoted existing account to admin: ${email}`);
     } else {
       console.log(`Admin already exists: ${email}`);
@@ -93,6 +76,6 @@ export async function ensureAdminAccount() {
   await auth.api.signUpEmail({
     body: { name: "Admin", email, password },
   });
-  await pool.query("UPDATE `user` SET role = 'admin' WHERE email = ?", [email]);
+  await db().collection("user").updateOne({ email }, { $set: { role: "admin" } });
   console.log(`Admin created: ${email}`);
 }

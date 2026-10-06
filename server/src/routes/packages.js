@@ -1,35 +1,31 @@
 const express = require('express');
 const router = express.Router();
-const { query, execute } = require('../config/db');
+const { db, nextId, num } = require('../config/db');
+
+async function withTotals(packages) {
+  const reservations = await db().collection('reservations').find({ status: { $ne: 'Cancelled' } }).toArray();
+  return packages.map((item) => {
+    const orders = reservations.filter((reservation) => Number(reservation.packageId) === Number(item.id));
+    return {
+      id: item.id,
+      _id: item.id,
+      name: item.name,
+      basePrice: item.basePrice,
+      description: item.description || '',
+      features: item.features || [],
+      isActive: Boolean(item.isActive),
+      isPopular: Boolean(item.isPopular),
+      rankOrder: item.rankOrder || 0,
+      totalOrders: orders.length,
+      totalRevenue: orders.reduce((sum, reservation) => sum + Number(reservation.totalAmount || 0), 0),
+    };
+  });
+}
 
 router.get('/', async (req, res) => {
   try {
-    const results = await query(`
-      SELECT p.id, p.id as _id, p.name, p.base_price as basePrice, p.description, p.features, 
-             p.is_active as isActive, p.is_popular as isPopular, p.rank_order as rankOrder,
-             COUNT(r.id) as totalOrders,
-             COALESCE(SUM(r.total_amount), 0) as totalRevenue
-      FROM service_packages p
-      LEFT JOIN reservations r ON p.id = r.package_id AND r.status != 'Cancelled'
-      GROUP BY p.id
-      ORDER BY p.rank_order ASC
-    `);
-
-    const packages = results.map(pkg => {
-      let parsedFeatures = [];
-      try {
-        parsedFeatures = typeof pkg.features === 'string' ? JSON.parse(pkg.features) : pkg.features || [];
-      } catch (e) {}
-
-      return {
-        ...pkg,
-        features: parsedFeatures,
-        isActive: Boolean(pkg.isActive),
-        isPopular: Boolean(pkg.isPopular)
-      };
-    });
-
-    res.json(packages);
+    const packages = await db().collection('packages').find({}).sort({ rankOrder: 1 }).toArray();
+    res.json(await withTotals(packages));
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -37,32 +33,10 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    const results = await query(`
-      SELECT p.id, p.id as _id, p.name, p.base_price as basePrice, p.description, p.features, 
-             p.is_active as isActive, p.is_popular as isPopular, p.rank_order as rankOrder,
-             COUNT(r.id) as totalOrders,
-             COALESCE(SUM(r.total_amount), 0) as totalRevenue
-      FROM service_packages p
-      LEFT JOIN reservations r ON p.id = r.package_id AND r.status != 'Cancelled'
-      WHERE p.id = ?
-      GROUP BY p.id
-    `, [id]);
-
-    if (results.length === 0) return res.status(404).json({ message: 'Package not found' });
-
-    let pkg = results[0];
-    let parsedFeatures = [];
-    try {
-      parsedFeatures = typeof pkg.features === 'string' ? JSON.parse(pkg.features) : pkg.features || [];
-    } catch (e) {}
-
-    res.json({
-      ...pkg,
-      features: parsedFeatures,
-      isActive: Boolean(pkg.isActive),
-      isPopular: Boolean(pkg.isPopular)
-    });
+    const item = await db().collection('packages').findOne({ id: num(req.params.id) });
+    if (!item) return res.status(404).json({ message: 'Package not found' });
+    const [presented] = await withTotals([item]);
+    res.json(presented);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -70,24 +44,18 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { name, basePrice, description, features, isActive, isPopular, rankOrder } = req.body;
-    
-    const sql = `
-      INSERT INTO service_packages (name, base_price, description, features, is_active, is_popular, rank_order)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `;
-    const params = [
-      name, 
-      basePrice, 
-      description, 
-      JSON.stringify(features || []), 
-      isActive ? 1 : 0, 
-      isPopular ? 1 : 0, 
-      rankOrder || 0
-    ];
-
-    const result = await execute(sql, params);
-    res.status(201).json({ id: result.insertId, message: 'Package created' });
+    const id = await nextId('packages');
+    await db().collection('packages').insertOne({
+      id,
+      name: req.body.name,
+      basePrice: Number(req.body.basePrice || 0),
+      description: req.body.description || '',
+      features: req.body.features || [],
+      isActive: Boolean(req.body.isActive),
+      isPopular: Boolean(req.body.isPopular),
+      rankOrder: Number(req.body.rankOrder || 0),
+    });
+    res.status(201).json({ id, message: 'Package created' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -95,37 +63,17 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
     const data = req.body;
-    let fields = [];
-    let params = [];
-    
-    const mapping = {
-      name: 'name',
-      basePrice: 'base_price',
-      description: 'description',
-      features: 'features',
-      isActive: 'is_active',
-      isPopular: 'is_popular',
-      rankOrder: 'rank_order'
-    };
-
-    for (const [key, col] of Object.entries(mapping)) {
-      if (data[key] !== undefined) {
-        fields.push(`${col} = ?`);
-        params.push(key === 'features' ? JSON.stringify(data[key]) : 
-                   (key === 'isActive' || key === 'isPopular' ? (data[key] ? 1 : 0) : data[key]));
-      }
-    }
-
-    if (fields.length === 0) {
-      return res.status(400).json({ message: 'No fields provided' });
-    }
-
-    params.push(id);
-    const sql = `UPDATE service_packages SET ${fields.join(', ')} WHERE id = ?`;
-    await execute(sql, params);
-    
+    const update = {};
+    if (data.name !== undefined) update.name = data.name;
+    if (data.basePrice !== undefined) update.basePrice = Number(data.basePrice);
+    if (data.description !== undefined) update.description = data.description;
+    if (data.features !== undefined) update.features = data.features;
+    if (data.isActive !== undefined) update.isActive = Boolean(data.isActive);
+    if (data.isPopular !== undefined) update.isPopular = Boolean(data.isPopular);
+    if (data.rankOrder !== undefined) update.rankOrder = Number(data.rankOrder);
+    if (!Object.keys(update).length) return res.status(400).json({ message: 'No fields provided' });
+    await db().collection('packages').updateOne({ id: num(req.params.id) }, { $set: update });
     res.json({ message: 'Updated successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -133,13 +81,12 @@ router.put('/:id', async (req, res) => {
 });
 
 router.delete('/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        await execute("DELETE FROM service_packages WHERE id = ?", [id]);
-        res.json({ message: "Package deleted successfully" });
-    } catch(err) {
-        res.status(500).json({ message: 'Server error', error: err.message });
-    }
+  try {
+    await db().collection('packages').deleteOne({ id: num(req.params.id) });
+    res.json({ message: 'Package deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
 });
 
 module.exports = router;

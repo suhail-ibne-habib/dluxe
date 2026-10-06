@@ -1,16 +1,21 @@
 const express = require('express');
 const router = express.Router();
-const { query, execute } = require('../config/db');
+const { db, num } = require('../config/db');
 
 router.get('/transactions', async (req, res) => {
   try {
-    const transactions = await query(`
-      SELECT t.*, t.id as _id, r.customer_name, r.customer_email 
-      FROM transactions t
-      JOIN reservations r ON t.reservation_id = r.id
-      ORDER BY t.created_at DESC
-    `);
-    res.json(transactions);
+    const transactions = await db().collection('transactions').find({}).sort({ created_at: -1 }).toArray();
+    const reservations = await db().collection('reservations').find({}).toArray();
+    const byId = new Map(reservations.map((reservation) => [Number(reservation.id), reservation]));
+    res.json(transactions.map((transaction) => {
+      const reservation = byId.get(Number(transaction.reservation_id));
+      return {
+        ...transaction,
+        _id: transaction.id,
+        customer_name: reservation?.customerName || '',
+        customer_email: reservation?.customerEmail || '',
+      };
+    }));
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -22,7 +27,7 @@ router.put('/transactions/:id', async (req, res) => {
     if (!['Succeeded', 'Failed', 'Refunded'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }
-    await execute('UPDATE transactions SET status = ? WHERE id = ?', [status, req.params.id]);
+    await db().collection('transactions').updateOne({ id: num(req.params.id) }, { $set: { status } });
     res.json({ message: 'Transaction updated' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -31,10 +36,7 @@ router.put('/transactions/:id', async (req, res) => {
 
 router.post('/transactions/refund', async (req, res) => {
   try {
-    const { transactionId } = req.body;
-    
-    // Simplistic refund logic for demo
-    await execute('UPDATE transactions SET status = "Refunded" WHERE id = ?', [transactionId]);
+    await db().collection('transactions').updateOne({ id: num(req.body.transactionId) }, { $set: { status: 'Refunded' } });
     res.json({ message: 'Refund successful' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -43,20 +45,22 @@ router.post('/transactions/refund', async (req, res) => {
 
 router.get('/analytics/revenue', async (req, res) => {
   try {
-    const months = await query(`
-      SELECT DATE_FORMAT(created_at, '%b') AS name,
-             SUM(total_amount) AS total
-      FROM reservations
-      WHERE status != 'Cancelled'
-        AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-      GROUP BY YEAR(created_at), MONTH(created_at)
-      ORDER BY YEAR(created_at), MONTH(created_at)
-    `);
-
-    res.json(months.map((row) => ({
-      name: row.name,
-      total: Number(row.total) || 0
-    })));
+    const start = new Date();
+    start.setMonth(start.getMonth() - 5);
+    start.setDate(1);
+    const reservations = await db().collection('reservations').find({
+      status: { $ne: 'Cancelled' },
+      createdAt: { $gte: start },
+    }).toArray();
+    const buckets = new Map();
+    for (const reservation of reservations) {
+      const date = new Date(reservation.createdAt);
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      const current = buckets.get(key) || { name: date.toLocaleString('en', { month: 'short' }), total: 0, sort: date.getFullYear() * 12 + date.getMonth() };
+      current.total += Number(reservation.totalAmount || 0);
+      buckets.set(key, current);
+    }
+    res.json([...buckets.values()].sort((a, b) => a.sort - b.sort).map(({ name, total }) => ({ name, total })));
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -64,17 +68,9 @@ router.get('/analytics/revenue', async (req, res) => {
 
 router.get('/customers', async (req, res) => {
   try {
-    const { email } = req.query;
-    let sql = 'SELECT * FROM users';
-    let params = [];
-    
-    if (email) {
-      sql += ' WHERE email LIKE ?';
-      params.push(`%${email}%`);
-    }
-    
-    const customers = await query(sql, params);
-    res.json(customers.map(({ password, ...customer }) => ({ ...customer, _id: customer.id })));
+    const filter = req.query.email ? { email: { $regex: req.query.email, $options: 'i' } } : {};
+    const customers = await db().collection('users').find(filter, { projection: { _id: 0, password: 0 } }).toArray();
+    res.json(customers.map((customer) => ({ ...customer, _id: customer.id })));
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

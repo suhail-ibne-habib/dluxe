@@ -1,98 +1,103 @@
 const express = require('express');
 const router = express.Router();
-const { query, execute } = require('../config/db');
+const { db, nextId, num } = require('../config/db');
 
-// Get all airport pages (Admin)
+async function airportName(airportId) {
+  if (!airportId) return null;
+  const location = await db().collection('locations').findOne({ 'airports.id': num(airportId) });
+  return location?.airports?.find((airport) => Number(airport.id) === num(airportId)) || null;
+}
+
+function present(page, airport) {
+  const { _id, ...rest } = page;
+  return {
+    ...rest,
+    airport_name: airport?.name || null,
+    airport_booking_link: airport?.link || null,
+    airport_note: airport?.note || null,
+  };
+}
+
 router.get('/', async (req, res) => {
   try {
-    const pages = await query(`
-      SELECT ap.*, a.name AS airport_name
-      FROM airport_pages ap
-      LEFT JOIN airports a ON ap.airport_id = a.id
-      ORDER BY ap.created_at DESC
-    `);
-    res.json(pages);
+    const pages = await db().collection('airport_pages').find({}).sort({ created_at: -1 }).toArray();
+    const presented = [];
+    for (const page of pages) presented.push(present(page, await airportName(page.airport_id)));
+    res.json(presented);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// Get a specific airport page by slug (Public)
 router.get('/:slug', async (req, res) => {
   try {
-    const { slug } = req.params;
-    const pages = await query(`
-      SELECT ap.*, a.name AS airport_name, a.link as airport_booking_link, a.note as airport_note
-      FROM airport_pages ap
-      LEFT JOIN airports a ON ap.airport_id = a.id
-      WHERE ap.slug = ?
-    `, [slug]);
-    
-    if (pages.length === 0) {
-      return res.status(404).json({ message: 'Airport page not found' });
-    }
-    
-    res.json(pages[0]);
+    const page = await db().collection('airport_pages').findOne({ slug: req.params.slug });
+    if (!page) return res.status(404).json({ message: 'Airport page not found' });
+    res.json(present(page, await airportName(page.airport_id)));
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// Create a new airport page (Admin)
 router.post('/', async (req, res) => {
   try {
-    const { slug, page_title, meta_description, hero_image_url, content, additional_info, is_published, airport_id, faqs, package_overrides } = req.body;
-    
-    // Check if slug already exists
-    const existing = await query('SELECT id FROM airport_pages WHERE slug = ?', [slug]);
-    if (existing.length > 0) {
-      return res.status(400).json({ message: 'A page with this URL slug already exists.' });
-    }
-
-    const result = await execute(
-      'INSERT INTO airport_pages (slug, page_title, meta_description, hero_image_url, content, additional_info, is_published, airport_id, faqs, package_overrides) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [slug, page_title, meta_description, hero_image_url, content, additional_info || null, is_published !== undefined ? is_published : true, airport_id || null, faqs ? JSON.stringify(faqs) : null, package_overrides ? JSON.stringify(package_overrides) : null]
-    );
-    
-    res.status(201).json({ id: result.insertId, message: 'Airport page created successfully' });
+    const body = req.body;
+    const existing = await db().collection('airport_pages').findOne({ slug: body.slug });
+    if (existing) return res.status(400).json({ message: 'A page with this URL slug already exists.' });
+    const id = await nextId('airport_pages');
+    await db().collection('airport_pages').insertOne({
+      id,
+      slug: body.slug,
+      page_title: body.page_title,
+      meta_description: body.meta_description || '',
+      hero_image_url: body.hero_image_url || '',
+      content: body.content || '',
+      additional_info: body.additional_info || '',
+      is_published: body.is_published !== undefined ? Boolean(body.is_published) : true,
+      airport_id: body.airport_id ? num(body.airport_id) : null,
+      faqs: body.faqs || [],
+      package_overrides: body.package_overrides || null,
+      created_at: new Date(),
+    });
+    res.status(201).json({ id, message: 'Airport page created successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// Update an existing airport page (Admin)
 router.put('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    const { slug, page_title, meta_description, hero_image_url, content, additional_info, is_published, airport_id, faqs, package_overrides } = req.body;
-    
-    // Check if slug exists for another page
-    const existing = await query('SELECT id FROM airport_pages WHERE slug = ? AND id != ?', [slug, id]);
-    if (existing.length > 0) {
-      return res.status(400).json({ message: 'A page with this URL slug already exists.' });
+    const id = num(req.params.id);
+    const body = req.body;
+    const existing = await db().collection('airport_pages').findOne({ slug: body.slug, id: { $ne: id } });
+    if (existing) return res.status(400).json({ message: 'A page with this URL slug already exists.' });
+    const airportId = body.airport_id ? num(body.airport_id) : null;
+    if (airportId) {
+      await db().collection('airport_pages').updateMany({ airport_id: airportId, id: { $ne: id } }, { $set: { airport_id: null } });
     }
-
-    // Optionally handle resetting other pages with this airport_id
-    if (airport_id) {
-      await execute('UPDATE airport_pages SET airport_id = NULL WHERE airport_id = ? AND id != ?', [airport_id, id]);
-    }
-
-    await execute(
-      'UPDATE airport_pages SET slug = ?, page_title = ?, meta_description = ?, hero_image_url = ?, content = ?, additional_info = ?, is_published = ?, airport_id = ?, faqs = ?, package_overrides = ? WHERE id = ?',
-      [slug, page_title, meta_description, hero_image_url, content, additional_info || null, is_published, airport_id || null, faqs ? JSON.stringify(faqs) : null, package_overrides ? JSON.stringify(package_overrides) : null, id]
-    );
-    
+    await db().collection('airport_pages').updateOne({ id }, {
+      $set: {
+        slug: body.slug,
+        page_title: body.page_title,
+        meta_description: body.meta_description || '',
+        hero_image_url: body.hero_image_url || '',
+        content: body.content || '',
+        additional_info: body.additional_info || '',
+        is_published: Boolean(body.is_published),
+        airport_id: airportId,
+        faqs: body.faqs || [],
+        package_overrides: body.package_overrides || null,
+      },
+    });
     res.json({ message: 'Airport page updated successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// Delete an airport page (Admin)
 router.delete('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    await execute('DELETE FROM airport_pages WHERE id = ?', [id]);
+    await db().collection('airport_pages').deleteOne({ id: num(req.params.id) });
     res.json({ message: 'Airport page deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

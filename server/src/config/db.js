@@ -1,45 +1,45 @@
-const mysql = require('mysql2/promise');
+const dns = require('dns');
+const { MongoClient } = require('mongodb');
 require('dotenv').config();
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || '127.0.0.1',
-  port: process.env.DB_PORT || 3306,
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'skyview',
-  waitForConnections: true,
-  connectionLimit: 5,
-  maxIdle: 1,
-  idleTimeout: 15000,
-  queueLimit: 0,
-  connectTimeout: 10000,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 10000
-});
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 
-const RETRYABLE = new Set(['ECONNRESET', 'PROTOCOL_CONNECTION_LOST', 'EPIPE', 'ETIMEDOUT']);
+function mongoUri() {
+  if (process.env.MONGODB_URI) return process.env.MONGODB_URI;
+  const user = encodeURIComponent(process.env.DB_USER || '');
+  const pass = encodeURIComponent(process.env.DB_PASSWORD || '');
+  const name = process.env.DB_NAME || 'dluxe';
+  return `mongodb+srv://${user}:${pass}@cluster0.x73jxvb.mongodb.net/${name}?retryWrites=true&w=majority&appName=Cluster0`;
+}
 
-async function withRetry(run) {
-  try {
-    return await run();
-  } catch (error) {
-    if (!RETRYABLE.has(error.code)) throw error;
-    return run();
+const client = new MongoClient(mongoUri());
+const databaseName = process.env.DB_NAME || 'dluxe';
+let connected = false;
+
+async function connect() {
+  if (!connected) {
+    await client.connect();
+    connected = true;
   }
+  return client.db(databaseName);
 }
 
-async function query(sql, params = []) {
-  const [rows] = await withRetry(() => pool.execute(sql, params));
-  return rows;
+function db() {
+  return client.db(databaseName);
 }
 
-async function execute(sql, params = []) {
-  const [result] = await withRetry(() => pool.execute(sql, params));
-  return result;
+async function nextId(name) {
+  const row = await db().collection('counters').findOneAndUpdate(
+    { _id: name },
+    { $inc: { seq: 1 } },
+    { upsert: true, returnDocument: 'after' }
+  );
+  return row?.seq ?? row?.value?.seq;
 }
 
-module.exports = {
-  pool,
-  query,
-  execute
-};
+function num(value) {
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? value : parsed;
+}
+
+module.exports = { client, connect, db, nextId, num };

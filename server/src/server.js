@@ -32,8 +32,8 @@ async function start() {
 
   app.get('/api/v1/health', async (req, res) => {
     try {
-      const { query } = require('./config/db');
-      await query('SELECT 1');
+      const { db } = require('./config/db');
+      await db().command({ ping: 1 });
       res.json({ status: 'ok', database: 'ok', timestamp: new Date() });
     } catch (error) {
       console.error('Health check failed:', error.message);
@@ -68,7 +68,9 @@ async function start() {
     res.status(500).json({ message: 'Something went wrong!', error: err.message });
   });
 
+  const { connect } = require('./config/db');
   const { ensureSchema } = require('./config/bootstrap');
+  await connect();
   await ensureSchema();
   await ensureAdminAccount();
 
