@@ -14,8 +14,9 @@ app.use(cors({
 }));
 
 async function start() {
-  const { toNodeHandler, fromNodeHeaders } = await import('better-auth/node');
+  const { toNodeHandler } = await import('better-auth/node');
   const { auth, ensureAdminAccount } = await import('./auth.mjs');
+  const { attachSession, requireAdmin, requireAdminOn } = require('./middleware/auth');
 
   // Better Auth must be mounted before the JSON body parser.
   // https://www.better-auth.com/docs/integrations/express
@@ -24,30 +25,12 @@ async function start() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  app.use(async (req, res, next) => {
-    try {
-      const session = await auth.api.getSession({
-        headers: fromNodeHeaders(req.headers),
-      });
-      if (session?.user) req.authUser = session.user;
-    } catch (error) {
-      console.error('Session lookup failed:', error.message);
-    }
-    next();
-  });
+  app.use(attachSession(auth));
 
-  function requireAdmin(req, res, next) {
-    if (!req.authUser || req.authUser.role !== 'admin') {
-      return res.status(401).json({ message: 'Admin session required' });
-    }
-    return next();
-  }
+  const adminWrites = requireAdminOn(['POST', 'PUT', 'PATCH', 'DELETE']);
+  const adminUpdates = requireAdminOn(['PUT', 'PATCH', 'DELETE']);
 
-  app.get('/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date() });
-  });
-
-  app.get('/api/health', async (req, res) => {
+  app.get('/api/v1/health', async (req, res) => {
     try {
       const { query } = require('./config/db');
       await query('SELECT 1');
@@ -69,16 +52,16 @@ async function start() {
   const testimonialsRoutes = require('./routes/testimonials');
   const airlineRoutes = require('./routes/airlines');
 
-  app.use('/api/locations', locationRoutes);
-  app.use('/api/reservations', reservationRoutes);
-  app.use('/api/packages', packageRoutes);
-  app.use('/api/leads', leadsRoutes);
+  app.use('/api/locations', adminWrites, locationRoutes);
+  app.use('/api/reservations', adminUpdates, reservationRoutes);
+  app.use('/api/packages', adminWrites, packageRoutes);
+  app.use('/api/leads', adminUpdates, leadsRoutes);
   app.use('/api/admin', requireAdmin, adminRoutes);
-  app.use('/api/user', userRoutes);
+  app.use('/api/user', adminUpdates, userRoutes);
   app.use('/api/settings', settingsRoutes);
-  app.use('/api/airport-pages', airportPagesRoutes);
-  app.use('/api/testimonials', testimonialsRoutes);
-  app.use('/api/airlines', airlineRoutes);
+  app.use('/api/airport-pages', adminWrites, airportPagesRoutes);
+  app.use('/api/testimonials', adminWrites, testimonialsRoutes);
+  app.use('/api/airlines', adminWrites, airlineRoutes);
 
   app.use((err, req, res, next) => {
     console.error(err.stack);

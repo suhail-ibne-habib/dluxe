@@ -13,6 +13,12 @@ const pool = createPool({
   password: process.env.DB_PASSWORD || "dluxe",
   database: process.env.DB_NAME || "dluxe",
   timezone: "Z",
+  connectionLimit: 5,
+  maxIdle: 1,
+  idleTimeout: 15000,
+  connectTimeout: 10000,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
 });
 
 async function sendAuthEmail({ to, subject, html, text }) {

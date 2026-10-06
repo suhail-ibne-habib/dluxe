@@ -8,26 +8,33 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'skyview',
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 5,
+  maxIdle: 1,
+  idleTimeout: 15000,
   queueLimit: 0,
+  connectTimeout: 10000,
   enableKeepAlive: true,
-  keepAliveInitialDelay: 0
+  keepAliveInitialDelay: 10000
 });
 
-// Catch and log pool connection errors to prevent retry spikes
-pool.on('connection', (connection) => {
-  connection.on('error', (err) => {
-    console.error('MySQL Connection Error:', err.message);
-  });
-});
+const RETRYABLE = new Set(['ECONNRESET', 'PROTOCOL_CONNECTION_LOST', 'EPIPE', 'ETIMEDOUT']);
+
+async function withRetry(run) {
+  try {
+    return await run();
+  } catch (error) {
+    if (!RETRYABLE.has(error.code)) throw error;
+    return run();
+  }
+}
 
 async function query(sql, params = []) {
-  const [rows] = await pool.execute(sql, params);
+  const [rows] = await withRetry(() => pool.execute(sql, params));
   return rows;
 }
 
 async function execute(sql, params = []) {
-  const [result] = await pool.execute(sql, params);
+  const [result] = await withRetry(() => pool.execute(sql, params));
   return result;
 }
 
