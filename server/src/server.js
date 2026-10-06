@@ -2,12 +2,17 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
+const { allowedOrigins } = require('./config/origins');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
-const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+const origins = allowedOrigins();
 
 app.use(cors({
-  origin: frontendUrl,
+  origin(origin, callback) {
+    if (!origin || origins.includes(origin)) callback(null, true);
+    else callback(null, false);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   exposedHeaders: ['set-auth-token'],
@@ -51,6 +56,8 @@ async function start() {
   const airportPagesRoutes = require('./routes/airport_pages');
   const testimonialsRoutes = require('./routes/testimonials');
   const airlineRoutes = require('./routes/airlines');
+  const carRoutes = require('./routes/cars');
+  const rentalRequestRoutes = require('./routes/rental_requests');
 
   app.use('/api/locations', adminWrites, locationRoutes);
   app.use('/api/reservations', adminUpdates, reservationRoutes);
@@ -62,6 +69,8 @@ async function start() {
   app.use('/api/airport-pages', adminWrites, airportPagesRoutes);
   app.use('/api/testimonials', adminWrites, testimonialsRoutes);
   app.use('/api/airlines', adminWrites, airlineRoutes);
+  app.use('/api/cars', adminWrites, carRoutes);
+  app.use('/api/rental-requests', requireAdminOn(['GET', 'PUT', 'PATCH', 'DELETE']), rentalRequestRoutes);
 
   app.use((err, req, res, next) => {
     console.error(err.stack);

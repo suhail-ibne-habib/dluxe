@@ -9,7 +9,10 @@ async function ensureSchema() {
     database.collection('airlines').createIndex({ name: 1 }, { unique: true }),
     database.collection('settings').createIndex({ key: 1 }, { unique: true }),
     database.collection('users').createIndex({ email: 1 }, { unique: true }),
+    database.collection('cars').createIndex({ id: 1 }, { unique: true }),
   ]);
+  const { seedCars } = require('../routes/cars');
+  await seedCars();
 
   const locations = await database.collection('locations').countDocuments();
   if (locations === 0) {

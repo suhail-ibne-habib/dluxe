@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Car,
   CreditCard,
   FileText,
   Inbox,
@@ -30,6 +31,7 @@ const groups = [
       ["Leads", "/admin/leads", FileText],
       ["Transactions", "/admin/transactions", CreditCard],
       ["Customers", "/admin/customers", Users],
+      ["Rental requests", "/admin/rentals", Car],
     ],
   },
   {
@@ -37,6 +39,7 @@ const groups = [
     links: [
       ["Locations", "/admin/locations", MapPin],
       ["Airlines", "/admin/airlines", Plane],
+      ["Cars", "/admin/cars", Car],
       ["Packages", "/admin/packages", Package],
       ["Pages", "/admin/pages", FileText],
       ["Testimonials", "/admin/testimonials", MessageSquareQuote],
@@ -51,6 +54,8 @@ const titles = {
   "/admin/leads": "Leads",
   "/admin/transactions": "Transactions",
   "/admin/customers": "Customers",
+  "/admin/rentals": "Rental requests",
+  "/admin/cars": "Cars",
   "/admin/locations": "Locations",
   "/admin/airlines": "Airlines",
   "/admin/packages": "Packages",

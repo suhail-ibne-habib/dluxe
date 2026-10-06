@@ -41,6 +41,7 @@ export default function Footer() {
             <li><a href="/airport/frankfurt-fra" className="hover:text-[#ea580c] transition-colors">FRA - Frankfurt, Germany</a></li>
             <li><a href="/airport/new-york-jfk" className="hover:text-[#ea580c] transition-colors">JFK - New York, USA</a></li>
             <li><a href="/airport/cancun-cun" className="hover:text-[#ea580c] transition-colors">CUN - Cancun, Mexico</a></li>
+            <li><a href="/rentals" className="hover:text-[#ea580c] transition-colors">Luxury car rental</a></li>
             <li><a href="/locations" className="text-[#ea580c] hover:text-white font-semibold flex items-center gap-1 transition-colors mt-2">View All Locations <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></a></li>
           </ul>
         </div>
