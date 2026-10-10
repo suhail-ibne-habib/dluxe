@@ -14,19 +14,22 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const body = req.body;
-    if (!body.email || !body.carId) return res.status(400).json({ message: 'Car and email are required' });
-    const car = await db().collection('cars').findOne({ id: num(body.carId) });
-    if (!car) return res.status(404).json({ message: 'Car not found' });
+    if (!body.pickupLocation || !body.returnLocation || !body.pickupDate || !body.returnDate || !body.flightOrStay) {
+      return res.status(400).json({ message: 'Pickup, return, dates, and flight or stay are required' });
+    }
     const id = await nextId('rental_requests');
     await db().collection('rental_requests').insertOne({
       id,
-      carId: car.id,
-      carName: car.name,
-      pickupLocation: body.pickupLocation || car.location || '',
-      pickupDate: body.pickupDate || null,
-      returnDate: body.returnDate || null,
+      carName: body.carName || 'Placeholder car',
+      pickupLocation: body.pickupLocation,
+      returnLocation: body.returnLocation,
+      pickupDate: body.pickupDate,
+      pickupTime: body.pickupTime || '',
+      returnDate: body.returnDate,
+      returnTime: body.returnTime || '',
+      flightOrStay: body.flightOrStay,
       name: body.name || '',
-      email: body.email,
+      email: body.email || '',
       phone: body.phone || '',
       status: 'Inquiry',
       createdAt: new Date(),

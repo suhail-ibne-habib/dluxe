@@ -39,7 +39,7 @@ const groups = [
     links: [
       ["Locations", "/admin/locations", MapPin],
       ["Airlines", "/admin/airlines", Plane],
-      ["Cars", "/admin/cars", Car],
+      ["Rental locations", "/admin/rental-locations", MapPin],
       ["Packages", "/admin/packages", Package],
       ["Pages", "/admin/pages", FileText],
       ["Testimonials", "/admin/testimonials", MessageSquareQuote],
@@ -55,7 +55,7 @@ const titles = {
   "/admin/transactions": "Transactions",
   "/admin/customers": "Customers",
   "/admin/rentals": "Rental requests",
-  "/admin/cars": "Cars",
+  "/admin/rental-locations": "Rental locations",
   "/admin/locations": "Locations",
   "/admin/airlines": "Airlines",
   "/admin/packages": "Packages",

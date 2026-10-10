@@ -35,7 +35,8 @@ export default function RentalRequestsPage() {
         { key: "guest", header: "Guest", cell: (row) => row.name || row.email },
         { key: "email", header: "Email", cell: (row) => row.email },
         { key: "pickup", header: "Pickup", cell: (row) => row.pickupLocation || "—" },
-        { key: "date", header: "Date", cell: (row) => row.pickupDate ? String(row.pickupDate).slice(0, 10) : "—" },
+        { key: "return", header: "Return", cell: (row) => row.returnLocation || "—" },
+        { key: "flight", header: "Flight or stay", cell: (row) => row.flightOrStay || "—" },
         {
           key: "status",
           header: "Status",

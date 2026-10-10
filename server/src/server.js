@@ -56,7 +56,7 @@ async function start() {
   const airportPagesRoutes = require('./routes/airport_pages');
   const testimonialsRoutes = require('./routes/testimonials');
   const airlineRoutes = require('./routes/airlines');
-  const carRoutes = require('./routes/cars');
+  const rentalLocationRoutes = require('./routes/rental_locations');
   const rentalRequestRoutes = require('./routes/rental_requests');
 
   app.use('/api/locations', adminWrites, locationRoutes);
@@ -69,7 +69,7 @@ async function start() {
   app.use('/api/airport-pages', adminWrites, airportPagesRoutes);
   app.use('/api/testimonials', adminWrites, testimonialsRoutes);
   app.use('/api/airlines', adminWrites, airlineRoutes);
-  app.use('/api/cars', adminWrites, carRoutes);
+  app.use('/api/rental-locations', adminWrites, rentalLocationRoutes);
   app.use('/api/rental-requests', requireAdminOn(['GET', 'PUT', 'PATCH', 'DELETE']), rentalRequestRoutes);
 
   app.use((err, req, res, next) => {
