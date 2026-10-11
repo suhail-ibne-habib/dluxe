@@ -23,7 +23,8 @@ const emptySearch = {
   returnDate: "",
   returnHour: "12",
   returnMinute: "00",
-  flightOrStay: "",
+  flightNumber: "",
+  placeOfStay: "",
 };
 
 function FieldLabel({ children }) {
@@ -82,7 +83,8 @@ export default function RentalsPage() {
           pickupTime: `${search.pickupHour}:${search.pickupMinute}`,
           returnDate: search.returnDate,
           returnTime: `${search.returnHour}:${search.returnMinute}`,
-          flightOrStay: search.flightOrStay,
+          flightNumber: search.flightNumber,
+          placeOfStay: search.placeOfStay,
           ...contact,
         }),
       });
@@ -154,10 +156,13 @@ export default function RentalsPage() {
               </div>
             </div>
 
-            <label className="grid gap-2 md:col-span-2">
-              <FieldLabel>Flight Number or Place of Stay *</FieldLabel>
-              <input required value={search.flightOrStay} onChange={(event) => setField("flightOrStay", event.target.value)} placeholder="e.g. WM 301 or hotel name" className="h-12 rounded-xl border border-gray-200 px-3 text-sm" />
-              <span className="text-xs text-gray-400">Enter your incoming flight number or where you&apos;re staying so we can coordinate your pickup.</span>
+            <label className="grid gap-2">
+              <FieldLabel>Flight Number *</FieldLabel>
+              <input required value={search.flightNumber} onChange={(event) => setField("flightNumber", event.target.value)} placeholder="e.g. WM 301" className="h-12 rounded-xl border border-gray-200 px-3 text-sm" />
+            </label>
+            <label className="grid gap-2">
+              <FieldLabel>Place of Stay *</FieldLabel>
+              <input required value={search.placeOfStay} onChange={(event) => setField("placeOfStay", event.target.value)} placeholder="Hotel or address" className="h-12 rounded-xl border border-gray-200 px-3 text-sm" />
             </label>
           </div>
           <button type="submit" className="mt-6 h-11 rounded-xl bg-[#ea580c] px-6 font-bold text-white">Show cars</button>

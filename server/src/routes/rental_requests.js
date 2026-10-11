@@ -14,8 +14,8 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const body = req.body;
-    if (!body.pickupLocation || !body.returnLocation || !body.pickupDate || !body.returnDate || !body.flightOrStay) {
-      return res.status(400).json({ message: 'Pickup, return, dates, and flight or stay are required' });
+    if (!body.pickupLocation || !body.returnLocation || !body.pickupDate || !body.returnDate || !body.flightNumber || !body.placeOfStay) {
+      return res.status(400).json({ message: 'Pickup, return, dates, flight number, and place of stay are required' });
     }
     const id = await nextId('rental_requests');
     await db().collection('rental_requests').insertOne({
@@ -27,7 +27,8 @@ router.post('/', async (req, res) => {
       pickupTime: body.pickupTime || '',
       returnDate: body.returnDate,
       returnTime: body.returnTime || '',
-      flightOrStay: body.flightOrStay,
+      flightNumber: body.flightNumber,
+      placeOfStay: body.placeOfStay,
       name: body.name || '',
       email: body.email || '',
       phone: body.phone || '',
