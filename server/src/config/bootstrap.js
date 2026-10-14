@@ -10,6 +10,9 @@ async function ensureSchema() {
     database.collection('settings').createIndex({ key: 1 }, { unique: true }),
     database.collection('users').createIndex({ email: 1 }, { unique: true }),
     database.collection('rental_locations').createIndex({ id: 1 }, { unique: true }),
+    database.collection('tours').createIndex({ id: 1 }, { unique: true }),
+    database.collection('tours').createIndex({ slug: 1 }, { unique: true }),
+    database.collection('tour_bookings').createIndex({ id: 1 }, { unique: true }),
   ]);
 
   const locations = await database.collection('locations').countDocuments();
@@ -17,6 +20,8 @@ async function ensureSchema() {
     const { seed } = require('../scripts/seed');
     await seed();
   }
+  const { seedTours } = require('../routes/tours');
+  await seedTours();
 }
 
 module.exports = { ensureSchema };

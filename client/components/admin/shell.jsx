@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Car,
+  Compass,
   CreditCard,
   FileText,
   Inbox,
@@ -15,6 +16,7 @@ import {
   MessageSquareQuote,
   Package,
   Settings,
+  Ticket,
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -32,6 +34,7 @@ const groups = [
       ["Transactions", "/admin/transactions", CreditCard],
       ["Customers", "/admin/customers", Users],
       ["Rental requests", "/admin/rentals", Car],
+      ["Tour requests", "/admin/tour-bookings", Ticket],
     ],
   },
   {
@@ -41,6 +44,7 @@ const groups = [
       ["Airlines", "/admin/airlines", Plane],
       ["Rental locations", "/admin/rental-locations", MapPin],
       ["Packages", "/admin/packages", Package],
+      ["Tours", "/admin/tours", Compass],
       ["Pages", "/admin/pages", FileText],
       ["Testimonials", "/admin/testimonials", MessageSquareQuote],
       ["Settings", "/admin/settings", Settings],
@@ -55,6 +59,8 @@ const titles = {
   "/admin/transactions": "Transactions",
   "/admin/customers": "Customers",
   "/admin/rentals": "Rental requests",
+  "/admin/tour-bookings": "Tour requests",
+  "/admin/tours": "Tours",
   "/admin/rental-locations": "Rental locations",
   "/admin/locations": "Locations",
   "/admin/airlines": "Airlines",
