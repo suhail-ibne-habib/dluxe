@@ -60,6 +60,7 @@ async function start() {
   const rentalRequestRoutes = require('./routes/rental_requests');
   const tourRoutes = require('./routes/tours');
   const tourBookingRoutes = require('./routes/tour_bookings');
+  const charterRequestRoutes = require('./routes/charter_requests');
 
   app.use('/api/locations', adminWrites, locationRoutes);
   app.use('/api/reservations', adminUpdates, reservationRoutes);
@@ -75,6 +76,7 @@ async function start() {
   app.use('/api/rental-requests', requireAdminOn(['GET', 'PUT', 'PATCH', 'DELETE']), rentalRequestRoutes);
   app.use('/api/tours', adminWrites, tourRoutes);
   app.use('/api/tour-bookings', requireAdminOn(['GET', 'PUT', 'PATCH', 'DELETE']), tourBookingRoutes);
+  app.use('/api/charter-requests', requireAdminOn(['GET', 'PUT', 'PATCH', 'DELETE']), charterRequestRoutes);
 
   app.use((err, req, res, next) => {
     console.error(err.stack);

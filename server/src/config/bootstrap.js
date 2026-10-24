@@ -13,6 +13,7 @@ async function ensureSchema() {
     database.collection('tours').createIndex({ id: 1 }, { unique: true }),
     database.collection('tours').createIndex({ slug: 1 }, { unique: true }),
     database.collection('tour_bookings').createIndex({ id: 1 }, { unique: true }),
+    database.collection('charter_requests').createIndex({ id: 1 }, { unique: true }),
   ]);
 
   const locations = await database.collection('locations').countDocuments();

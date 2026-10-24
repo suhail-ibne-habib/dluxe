@@ -35,6 +35,7 @@ const groups = [
       ["Customers", "/admin/customers", Users],
       ["Rental requests", "/admin/rentals", Car],
       ["Tour requests", "/admin/tour-bookings", Ticket],
+      ["Charter requests", "/admin/charters", Plane],
     ],
   },
   {
@@ -60,6 +61,7 @@ const titles = {
   "/admin/customers": "Customers",
   "/admin/rentals": "Rental requests",
   "/admin/tour-bookings": "Tour requests",
+  "/admin/charters": "Charter requests",
   "/admin/tours": "Tours",
   "/admin/rental-locations": "Rental locations",
   "/admin/locations": "Locations",
