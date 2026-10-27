@@ -82,7 +82,7 @@ export default function BookingDetails({ airport, date, passengers, activeServic
           <button
             key={p._id}
             onClick={() => setActiveService(p.name)}
-            className={`flex-1 min-w-[160px] p-5 rounded-2xl border-2 transition-all relative group ${activeService === p.name ? 'border-[#ea580c] bg-white shadow-xl translate-y-[-2px]' : 'border-gray-200 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-300'}`}
+            className={`relative min-w-0 flex-1 basis-full rounded-2xl border-2 p-4 transition-all group sm:basis-[calc(50%-0.5rem)] sm:p-5 ${activeService === p.name ? 'border-[#ea580c] bg-white shadow-xl translate-y-[-2px]' : 'border-gray-200 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-300'}`}
           >
             {p.isPopular && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#ea580c] text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg shadow-orange-500/30 whitespace-nowrap">

@@ -31,7 +31,7 @@ export default function HeroSection() {
   }, { scope: container });
 
   return (
-    <header ref={container} className="relative w-full min-h-screen md:[@media(min-height:800px)]:min-h-0 md:[@media(min-height:800px)]:h-[80vh] flex items-center bg-gray-900 py-32 md:py-0 overflow-hidden">
+    <header ref={container} className="relative flex w-full min-h-screen items-center overflow-hidden bg-gray-900 py-24 sm:py-28 md:py-0 md:[@media(min-height:800px)]:h-[80vh] md:[@media(min-height:800px)]:min-h-0">
       <div className="absolute inset-0 z-0">
         <img 
           src="https://images.unsplash.com/photo-1540962351504-03099e0a754b?q=80&w=2600&auto=format&fit=crop" 
@@ -44,7 +44,7 @@ export default function HeroSection() {
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-12 flex flex-col md:flex-row justify-between items-center gap-12 mt-24 md:mt-16">
         <div className="max-w-xl text-white">
           <span className="hero-text-anim inline-block px-3 py-1 bg-white/10 rounded-full text-xs font-semibold tracking-wider text-[#ea580c] mb-6 backdrop-blur-sm uppercase">World Class Travel</span>
-          <h1 className="hero-text-anim text-5xl md:text-7xl font-extrabold leading-tight mb-6">
+          <h1 className="hero-text-anim mb-6 text-4xl font-extrabold leading-tight sm:text-5xl md:text-7xl">
             Elevate Your <br/><span className="text-[#ea580c]">Journey</span>
           </h1>
           <p className="hero-text-anim text-lg md:text-xl text-gray-300 mb-8 leading-relaxed">

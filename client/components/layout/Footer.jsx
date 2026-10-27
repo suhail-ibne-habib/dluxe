@@ -36,7 +36,7 @@ export default function Footer() {
             <li><a href="/airport/paris-cdg" className="hover:text-[#ea580c] transition-colors">CDG - Paris Charles de Gaulle</a></li>
           </ul>
         </div>
-        <div className="md:col-span-4 translate-y-8">
+        <div className="md:col-span-4 md:translate-y-8">
           <ul className="space-y-3 text-sm">
             <li><a href="/airport/frankfurt-fra" className="hover:text-[#ea580c] transition-colors">FRA - Frankfurt, Germany</a></li>
             <li><a href="/airport/new-york-jfk" className="hover:text-[#ea580c] transition-colors">JFK - New York, USA</a></li>

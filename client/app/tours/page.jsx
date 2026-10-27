@@ -32,7 +32,7 @@ export default function ToursPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/50" />
         <div className="relative z-10 mx-auto flex h-full max-w-4xl flex-col items-center justify-center px-6 pt-24 text-center text-white">
-          <h1 className="text-balance text-4xl font-extrabold leading-tight drop-shadow-md md:text-5xl">
+          <h1 className="text-balance text-3xl font-extrabold leading-tight drop-shadow-md sm:text-4xl md:text-5xl">
             Tours and rentals in St. Maarten
           </h1>
           <p className="mt-4 max-w-2xl text-balance text-sm leading-relaxed text-white/95 md:text-lg">

@@ -102,15 +102,15 @@ export default function RentalsPage() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#f4f6f5] text-[#0f172a]">
       <Navbar />
-      <header className="relative h-[520px] overflow-hidden md:h-[560px]">
+      <header className="relative h-[460px] overflow-hidden sm:h-[520px] md:h-[560px]">
         <img
           src="https://commons.wikimedia.org/wiki/Special:FilePath/Philipsburg,_St._Maarten,_Netherlands_Antilles_(32741901691).jpg?width=2000"
           alt="Philipsburg, St. Maarten"
           className="absolute inset-0 h-full w-full object-cover object-[center_40%]"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/50" />
-        <div className="relative z-10 mx-auto flex h-full max-w-4xl flex-col items-center justify-center px-6 pb-36 pt-24 text-center text-white">
-          <h1 className="text-balance text-4xl font-extrabold leading-tight drop-shadow-md md:text-5xl">
+        <div className="relative z-10 mx-auto flex h-full max-w-4xl flex-col items-center justify-center px-5 pb-28 pt-20 text-center text-white sm:px-6 sm:pb-36 sm:pt-24">
+          <h1 className="text-balance text-3xl font-extrabold leading-tight drop-shadow-md sm:text-4xl md:text-5xl">
             Affordable &amp; Reliable Car Rental in St.&nbsp;Maarten
           </h1>
           <p className="mt-4 max-w-2xl text-balance text-sm leading-relaxed text-white/95 md:text-lg">
@@ -141,18 +141,22 @@ export default function RentalsPage() {
 
             <div className="grid gap-2">
               <FieldLabel>Pickup Date & Time *</FieldLabel>
-              <div className="grid grid-cols-[1fr_72px_72px] gap-2">
-                <input required type="date" value={search.pickupDate} onChange={(event) => setField("pickupDate", event.target.value)} className="h-12 rounded-xl border border-gray-200 px-3 text-sm" />
-                <SelectBox value={search.pickupHour} onChange={(event) => setField("pickupHour", event.target.value)}>{hours.map((hour) => <option key={hour}>{hour}</option>)}</SelectBox>
-                <SelectBox value={search.pickupMinute} onChange={(event) => setField("pickupMinute", event.target.value)}>{minutes.map((minute) => <option key={minute}>{minute}</option>)}</SelectBox>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_4.5rem_4.5rem]">
+                <input required type="date" value={search.pickupDate} onChange={(event) => setField("pickupDate", event.target.value)} className="h-12 min-w-0 w-full rounded-xl border border-gray-200 px-3 text-sm" />
+                <div className="grid grid-cols-2 gap-2 sm:contents">
+                  <SelectBox value={search.pickupHour} onChange={(event) => setField("pickupHour", event.target.value)}>{hours.map((hour) => <option key={hour}>{hour}</option>)}</SelectBox>
+                  <SelectBox value={search.pickupMinute} onChange={(event) => setField("pickupMinute", event.target.value)}>{minutes.map((minute) => <option key={minute}>{minute}</option>)}</SelectBox>
+                </div>
               </div>
             </div>
             <div className="grid gap-2">
               <FieldLabel>Return Date & Time *</FieldLabel>
-              <div className="grid grid-cols-[1fr_72px_72px] gap-2">
-                <input required type="date" value={search.returnDate} onChange={(event) => setField("returnDate", event.target.value)} className="h-12 rounded-xl border border-gray-200 px-3 text-sm" />
-                <SelectBox value={search.returnHour} onChange={(event) => setField("returnHour", event.target.value)}>{hours.map((hour) => <option key={hour}>{hour}</option>)}</SelectBox>
-                <SelectBox value={search.returnMinute} onChange={(event) => setField("returnMinute", event.target.value)}>{minutes.map((minute) => <option key={minute}>{minute}</option>)}</SelectBox>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_4.5rem_4.5rem]">
+                <input required type="date" value={search.returnDate} onChange={(event) => setField("returnDate", event.target.value)} className="h-12 min-w-0 w-full rounded-xl border border-gray-200 px-3 text-sm" />
+                <div className="grid grid-cols-2 gap-2 sm:contents">
+                  <SelectBox value={search.returnHour} onChange={(event) => setField("returnHour", event.target.value)}>{hours.map((hour) => <option key={hour}>{hour}</option>)}</SelectBox>
+                  <SelectBox value={search.returnMinute} onChange={(event) => setField("returnMinute", event.target.value)}>{minutes.map((minute) => <option key={minute}>{minute}</option>)}</SelectBox>
+                </div>
               </div>
             </div>
 

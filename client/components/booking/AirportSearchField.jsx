@@ -114,13 +114,13 @@ export default function AirportSearchField({ selectedAirport, onSelect }) {
                   onSelect(loc.name);
                   setIsDropdownOpen(false);
                 }}
-                className="px-5 py-2.5 hover:bg-gray-50 cursor-pointer flex items-center justify-between"
+                className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-gray-50 cursor-pointer sm:px-5"
               >
-                <div className="flex gap-4 items-center w-[85%]">
-                  <span className="text-sm font-bold text-gray-800 w-[40%] truncate">{loc.countryName}</span>
-                  <span className="text-sm text-gray-500 w-[60%] truncate">{airportText}</span>
+                <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+                  <span className="min-w-0 flex-[0.4] truncate text-sm font-bold text-gray-800">{loc.countryName}</span>
+                  <span className="min-w-0 flex-[0.6] truncate text-sm text-gray-500">{airportText}</span>
                 </div>
-                <span className="text-sm font-bold text-gray-400">{iata}</span>
+                <span className="shrink-0 text-sm font-bold text-gray-400">{iata}</span>
               </li>
             );
           })}

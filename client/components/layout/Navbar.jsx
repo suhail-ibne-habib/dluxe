@@ -10,10 +10,10 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="absolute top-0 w-full z-50 flex justify-between items-center py-6 px-4 md:px-12 text-white">
-        <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+      <nav className="absolute top-0 z-50 flex w-full items-center justify-between px-4 py-4 text-white sm:py-6 md:px-12">
+        <a href="/" className="flex max-w-[55%] shrink items-center gap-2 hover:opacity-80 transition-opacity">
           {/* Logo Image */}
-          <img src="/dluxe-logo.jpg" alt="D'LUXE Logo" className="h-20 w-auto object-contain rounded-xl" />
+          <img src="/dluxe-logo.jpg" alt="D'LUXE Logo" className="h-12 w-auto max-w-full object-contain rounded-xl sm:h-16 md:h-20" />
         </a>
         <div className="hidden md:flex items-center gap-8 font-medium text-sm">
           <a href="/locations" className="hover:text-[#ea580c] transition-colors py-2 uppercase tracking-wider font-bold">

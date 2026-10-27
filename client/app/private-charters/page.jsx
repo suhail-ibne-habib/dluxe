@@ -93,7 +93,7 @@ export default function PrivateChartersPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/50" />
         <div className="relative z-10 mx-auto flex h-full max-w-4xl flex-col items-center justify-center px-6 pt-24 text-center text-white">
-          <h1 className="text-balance text-4xl font-extrabold leading-tight drop-shadow-md md:text-5xl">
+          <h1 className="text-balance text-3xl font-extrabold leading-tight drop-shadow-md sm:text-4xl md:text-5xl">
             Private Charters
           </h1>
           <p className="mt-4 max-w-2xl text-balance text-sm leading-relaxed text-white/95 md:text-lg">
@@ -146,9 +146,9 @@ export default function PrivateChartersPage() {
             <div className="grid gap-5 md:grid-cols-2">
               <div className="grid gap-2">
                 <FieldLabel>Departure Date & Time *</FieldLabel>
-                <div className="grid grid-cols-[1fr_110px] gap-2">
-                  <input required type="date" value={form.departureDate} onChange={(event) => setField("departureDate", event.target.value)} className="h-12 rounded-xl border border-gray-200 px-3 text-sm" />
-                  <input required type="time" value={form.departureTime} onChange={(event) => setField("departureTime", event.target.value)} className="h-12 rounded-xl border border-gray-200 px-3 text-sm" />
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_7rem]">
+                  <input required type="date" value={form.departureDate} onChange={(event) => setField("departureDate", event.target.value)} className="h-12 min-w-0 w-full rounded-xl border border-gray-200 px-3 text-sm" />
+                  <input required type="time" value={form.departureTime} onChange={(event) => setField("departureTime", event.target.value)} className="h-12 min-w-0 w-full rounded-xl border border-gray-200 px-3 text-sm" />
                 </div>
               </div>
               <label className="grid gap-2">
@@ -164,9 +164,9 @@ export default function PrivateChartersPage() {
             {form.tripType === "Round Trip" ? (
               <div className="grid gap-2">
                 <FieldLabel>Return Date & Time *</FieldLabel>
-                <div className="grid max-w-md grid-cols-[1fr_110px] gap-2">
-                  <input required type="date" value={form.returnDate} onChange={(event) => setField("returnDate", event.target.value)} className="h-12 rounded-xl border border-gray-200 px-3 text-sm" />
-                  <input required type="time" value={form.returnTime} onChange={(event) => setField("returnTime", event.target.value)} className="h-12 rounded-xl border border-gray-200 px-3 text-sm" />
+                <div className="grid max-w-md grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_7rem]">
+                  <input required type="date" value={form.returnDate} onChange={(event) => setField("returnDate", event.target.value)} className="h-12 min-w-0 w-full rounded-xl border border-gray-200 px-3 text-sm" />
+                  <input required type="time" value={form.returnTime} onChange={(event) => setField("returnTime", event.target.value)} className="h-12 min-w-0 w-full rounded-xl border border-gray-200 px-3 text-sm" />
                 </div>
               </div>
             ) : null}
