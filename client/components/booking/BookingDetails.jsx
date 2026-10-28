@@ -114,27 +114,27 @@ export default function BookingDetails({ airport, date, passengers, activeServic
       )}
 
       {/* Service Details Card */}
-      <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm flex flex-col md:flex-row gap-12 mt-2">
+      <div className="mt-2 flex min-w-0 flex-col gap-12 overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8 md:flex-row">
         {/* Left Side: Pricing */}
-        <div className="md:w-1/3 flex flex-col justify-between">
-          <div>
-            <span className="inline-block px-3 py-1 bg-gray-900 text-white text-[10px] font-extrabold uppercase tracking-widest rounded mb-4">Elite Selection</span>
-            <h3 className="text-3xl font-bold text-gray-900 leading-tight">
+        <div className="flex min-w-0 flex-col justify-between md:w-1/3">
+          <div className="min-w-0">
+            <span className="mb-4 inline-block rounded bg-gray-900 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white">Elite Selection</span>
+            <h3 className="text-3xl font-bold leading-tight break-words text-gray-900">
               {selectedPkg?.name}
             </h3>
             {selectedPkg?.description ? (
-              <div className="text-sm text-gray-500 mt-2 font-medium leading-relaxed" dangerouslySetInnerHTML={{ __html: selectedPkg.description }} />
+              <div className="mt-2 text-sm font-medium leading-relaxed break-words text-gray-500 [&_*]:max-w-full [&_*]:break-words" dangerouslySetInnerHTML={{ __html: selectedPkg.description }} />
             ) : (
-              <p className="text-sm text-gray-500 mt-2 font-medium leading-relaxed">Experience seamless luxury with our curated airport services.</p>
+              <p className="mt-2 text-sm font-medium leading-relaxed text-gray-500">Experience seamless luxury with our curated airport services.</p>
             )}
           </div>
-          <div className="mt-8 md:mt-0 pt-6 border-t border-gray-50">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total package price</p>
+          <div className="mt-8 border-t border-gray-50 pt-6 md:mt-0">
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">Total package price</p>
             <div className="flex flex-col gap-1">
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-black text-gray-900">{formatMoney(getComputedPrice(selectedPkg) * parseInt(passengers || '1'), { withCode: true })}</span>
+              <div className="flex flex-wrap items-baseline gap-2">
+                <span className="text-4xl font-black break-words text-gray-900">{formatMoney(getComputedPrice(selectedPkg) * parseInt(passengers || '1'), { withCode: true })}</span>
               </div>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
                 {parseInt(passengers || '1')} {parseInt(passengers || '1') === 1 ? 'Passenger' : 'Passengers'} (@ {formatMoney(getComputedPrice(selectedPkg))})
               </p>
             </div>
@@ -142,19 +142,22 @@ export default function BookingDetails({ airport, date, passengers, activeServic
         </div>
 
         {/* Right Side: Features */}
-        <div className="md:w-2/3 border-t md:border-t-0 md:border-l border-gray-100 pt-8 md:pt-0 md:pl-12">
-          <p className="text-xs font-bold text-gray-900 uppercase tracking-widest mb-6 border-b border-gray-50 pb-4">Included in Package:</p>
-          <ul className="grid grid-cols-1 gap-6">
-            {selectedPkg?.features.map((feature, idx) => (
-              <li key={idx} className="flex flex-row items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5 text-[#ea580c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+        <div className="min-w-0 border-t border-gray-100 pt-8 md:w-2/3 md:border-t-0 md:border-l md:pt-0 md:pl-12">
+          <p className="mb-6 border-b border-gray-50 pb-4 text-xs font-bold uppercase tracking-widest text-gray-900">Included in Package:</p>
+          <ul className="grid min-w-0 grid-cols-1 gap-6">
+            {(selectedPkg?.features || []).map((feature, idx) => (
+              <li key={idx} className="flex min-w-0 flex-row items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50">
+                  <svg className="h-5 w-5 text-[#ea580c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
                 </div>
-                <p className="text-xs text-gray-700 font-bold leading-relaxed" dangerouslySetInnerHTML={{ __html: feature }} />
+                <div
+                  className="min-w-0 flex-1 text-xs font-bold leading-relaxed break-words text-gray-700 [&_*]:max-w-full [&_*]:whitespace-normal [&_*]:break-words"
+                  dangerouslySetInnerHTML={{ __html: typeof feature === "string" ? feature : String(feature?.title || feature?.name || feature || "") }}
+                />
               </li>
             ))}
-            {selectedPkg?.features.length === 0 && (
-              <li className="text-sm text-gray-400 italic col-span-full">Standard concierge features included.</li>
+            {(selectedPkg?.features || []).length === 0 && (
+              <li className="col-span-full text-sm text-gray-400 italic">Standard concierge features included.</li>
             )}
           </ul>
         </div>

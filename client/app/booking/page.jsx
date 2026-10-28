@@ -261,8 +261,8 @@ function BookingContent() {
       <ProgressBar currentStep={currentStep} />
 
       <FormProvider {...methods}>
-        <main className="max-w-7xl mx-auto px-4 md:px-12 py-10 flex flex-col lg:flex-row gap-8">
-          <div className="lg:w-2/3">
+        <main className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-10 md:px-12 lg:flex-row">
+          <div className="min-w-0 lg:w-2/3">
             {currentStep > 1 && (
               <button
                 type="button"
@@ -318,7 +318,7 @@ function BookingContent() {
             </form>
           </div>
 
-          <div className="lg:w-1/3">
+          <div className="min-w-0 lg:w-1/3">
             <div className="sticky top-10">
               <QuoteSidebar
                 airport={airport}
