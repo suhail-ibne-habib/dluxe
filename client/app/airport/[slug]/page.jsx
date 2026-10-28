@@ -4,6 +4,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import HorizontalSearchForm from "@/components/booking/HorizontalSearchForm";
 import AirportAbout from "@/components/airport/AirportAbout";
+import { formatMoney } from "@/lib/currency";
 import Head from 'next/head';
 
 function PackageDescription({ html, light }) {
@@ -204,7 +205,7 @@ export default function DynamicAirportPage({ params }) {
                         <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#ea580c] text-white text-xs font-bold uppercase tracking-wider py-1 px-4 rounded-full shadow-md z-20 whitespace-nowrap">Most Popular</div>
                     )}
                     <h3 className={`text-2xl font-bold mb-2 relative z-10 ${isPopular ? "text-white mt-4" : "text-[#0f172a]"}`}>{pkg.name}</h3>
-                    <p className="text-[#ea580c] font-semibold mb-4 relative z-10">${price} / passenger</p>
+                    <p className="text-[#ea580c] font-semibold mb-4 relative z-10">{formatMoney(price)} / passenger</p>
                     <PackageDescription html={pkg.description} light={isPopular} />
                     <ul className={`space-y-4 mb-8 relative z-10 flex-1 ${isPopular ? "text-gray-300" : "text-gray-600"}`}>
                       {features.map((feature, i) => (
@@ -321,7 +322,7 @@ export default function DynamicAirportPage({ params }) {
             {pagePackages.extras.filter((extra) => extra.name).map((extra, index) => (
               <div key={index} className="bg-white border border-gray-200 rounded-2xl p-8">
                 <h3 className="text-2xl font-bold text-[#0f172a] mb-2">{extra.name}</h3>
-                <p className="text-[#ea580c] font-semibold mb-6">${extra.price} / passenger</p>
+                <p className="text-[#ea580c] font-semibold mb-6">{formatMoney(extra.price)} / passenger</p>
                 <p className="text-gray-600 mb-8">{extra.description}</p>
                 <a href={`/booking?airport=${encodeURIComponent(page.airport_name || page.page_title)}&service=${encodeURIComponent(extra.name)}`} className="block w-full py-3 px-4 bg-white border border-gray-300 rounded-md text-center font-bold text-[#0f172a]">Book</a>
               </div>

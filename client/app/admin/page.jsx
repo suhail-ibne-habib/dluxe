@@ -48,7 +48,7 @@ export default function AdminHome() {
   const change = previous ? ((latest - previous) / previous) * 100 : null;
 
   const cards = [
-    ["Total revenue", counts.Revenue == null ? "—" : `$${Number(counts.Revenue).toLocaleString()}`, "Booked amount", "Excludes cancelled trips"],
+    ["Total revenue", counts.Revenue == null ? "—" : `€${Number(counts.Revenue).toLocaleString()}`, "Booked amount", "Excludes cancelled trips"],
     ["Reservations", counts.Reservations ?? "—", "All bookings", "Trips currently on file"],
     ["Customers", counts.Customers ?? "—", "Registered accounts", "People who can sign in"],
     ["Leads", counts.Leads ?? "—", "Inbound inquiries", "Quotes that are not bookings yet"],

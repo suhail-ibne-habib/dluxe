@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { Cog, MapPin, Users } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import SameDayNotice from "@/components/booking/SameDayNotice";
+import { isSameDay, todayISO } from "@/lib/booking-dates";
+import { formatMoney } from "@/lib/currency";
 
 const hours = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, "0"));
 const minutes = ["00", "15", "30", "45"];
@@ -59,8 +62,14 @@ export default function RentalsPage() {
     setSearch((current) => ({ ...current, [key]: value }));
   }
 
+  const sameDay = isSameDay(search.pickupDate) || isSameDay(search.returnDate);
+
   function showCars(event) {
     event.preventDefault();
+    if (sameDay) {
+      setMessage("For same day booking please contact us via WhatsApp.");
+      return;
+    }
     setSelected(null);
     setMessage("");
     setResults(placeholderCars);
@@ -69,6 +78,10 @@ export default function RentalsPage() {
 
   async function submitRequest(event) {
     event.preventDefault();
+    if (sameDay) {
+      setMessage("For same day booking please contact us via WhatsApp.");
+      return;
+    }
     setSending(true);
     setMessage("");
     try {
@@ -142,7 +155,7 @@ export default function RentalsPage() {
             <div className="grid gap-2">
               <FieldLabel>Pickup Date & Time *</FieldLabel>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_4.5rem_4.5rem]">
-                <input required type="date" value={search.pickupDate} onChange={(event) => setField("pickupDate", event.target.value)} className="h-12 min-w-0 w-full rounded-xl border border-gray-200 px-3 text-sm" />
+                <input required type="date" min={todayISO()} value={search.pickupDate} onChange={(event) => setField("pickupDate", event.target.value)} className="h-12 min-w-0 w-full rounded-xl border border-gray-200 px-3 text-sm" />
                 <div className="grid grid-cols-2 gap-2 sm:contents">
                   <SelectBox value={search.pickupHour} onChange={(event) => setField("pickupHour", event.target.value)}>{hours.map((hour) => <option key={hour}>{hour}</option>)}</SelectBox>
                   <SelectBox value={search.pickupMinute} onChange={(event) => setField("pickupMinute", event.target.value)}>{minutes.map((minute) => <option key={minute}>{minute}</option>)}</SelectBox>
@@ -152,7 +165,7 @@ export default function RentalsPage() {
             <div className="grid gap-2">
               <FieldLabel>Return Date & Time *</FieldLabel>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_4.5rem_4.5rem]">
-                <input required type="date" value={search.returnDate} onChange={(event) => setField("returnDate", event.target.value)} className="h-12 min-w-0 w-full rounded-xl border border-gray-200 px-3 text-sm" />
+                <input required type="date" min={search.pickupDate || todayISO()} value={search.returnDate} onChange={(event) => setField("returnDate", event.target.value)} className="h-12 min-w-0 w-full rounded-xl border border-gray-200 px-3 text-sm" />
                 <div className="grid grid-cols-2 gap-2 sm:contents">
                   <SelectBox value={search.returnHour} onChange={(event) => setField("returnHour", event.target.value)}>{hours.map((hour) => <option key={hour}>{hour}</option>)}</SelectBox>
                   <SelectBox value={search.returnMinute} onChange={(event) => setField("returnMinute", event.target.value)}>{minutes.map((minute) => <option key={minute}>{minute}</option>)}</SelectBox>
@@ -169,7 +182,11 @@ export default function RentalsPage() {
               <input required value={search.placeOfStay} onChange={(event) => setField("placeOfStay", event.target.value)} placeholder="Hotel or address" className="h-12 rounded-xl border border-gray-200 px-3 text-sm" />
             </label>
           </div>
-          <button type="submit" className="mt-6 h-11 rounded-xl bg-[#ea580c] px-6 font-bold text-white">Show cars</button>
+          <div className="mt-5">
+            <SameDayNotice show={sameDay} />
+          </div>
+          <button disabled={sameDay} type="submit" className="mt-6 h-11 rounded-xl bg-[#ea580c] px-6 font-bold text-white disabled:opacity-70">Show cars</button>
+          {message && sameDay ? <p className="mt-3 text-sm text-gray-600">{message}</p> : null}
         </form>
 
         {results ? (
@@ -188,7 +205,7 @@ export default function RentalsPage() {
                     <span className="inline-flex items-center gap-2"><Cog className="h-4 w-4" /> {car.transmission}</span>
                   </div>
                   <p className="mt-4 border-t border-gray-100 pt-4">
-                    <span className="text-2xl font-extrabold">${car.pricePerDay}</span>
+                    <span className="text-2xl font-extrabold">{formatMoney(car.pricePerDay)}</span>
                     <span className="text-sm text-gray-400"> / day</span>
                   </p>
                   <button type="button" onClick={() => { setSelected(car); setMessage(""); }} className="mt-4 h-10 w-full rounded-lg bg-[#ea580c] font-bold text-white">Book now</button>

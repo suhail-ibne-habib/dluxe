@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 import AirportSearchField from "@/components/booking/AirportSearchField";
+import SameDayNotice from "@/components/booking/SameDayNotice";
+import { isSameDay, todayISO } from "@/lib/booking-dates";
 
 export default function HeroBookingForm() {
   const router = useRouter();
@@ -68,6 +70,8 @@ export default function HeroBookingForm() {
   }, [setValue, watch]);
 
   const selectedAirportName = watch("airport");
+  const selectedDate = watch("date");
+  const sameDay = isSameDay(selectedDate);
 
   // Filter packages based on selected airport
   const filteredPackages = useMemo(() => {
@@ -103,19 +107,8 @@ export default function HeroBookingForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onSubmit = async (data) => {
+    if (isSameDay(data.date)) return;
     setIsSubmitting(true);
-    // Capture lead first if email is provided
-    // if (data.email) {
-    //   try {
-    //     await fetch('/api/leads', {
-    //       method: 'POST',
-    //       headers: { 'Content-Type': 'application/json' },
-    //       body: JSON.stringify(data)
-    //     });
-    //   } catch (err) {
-    //     console.error('Failed to capture lead:', err);
-    //   }
-    // }
 
     const query = new URLSearchParams({
       airport: data.airport,
@@ -176,6 +169,7 @@ export default function HeroBookingForm() {
             </label>
             <input
               type="date"
+              min={todayISO()}
               {...register("date", { required: "Date is required" })}
               className={`w-full bg-gray-50 border ${errors.date ? 'border-red-300 ring-1 ring-red-100' : 'border-gray-200'} text-gray-900 rounded-lg px-4 py-3 [@media(max-height:800px)]:py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#ea580c]`}
             />
@@ -195,6 +189,8 @@ export default function HeroBookingForm() {
             />
           </div>
         </div>
+
+        <SameDayNotice show={sameDay} />
 
         <div className="space-y-1.5 pt-2">
           <label className={`text-xs font-semibold uppercase tracking-wide flex justify-between items-center ${errors.email ? 'text-red-500' : 'text-gray-500'}`}>
@@ -217,7 +213,7 @@ export default function HeroBookingForm() {
 
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || sameDay}
           className="w-full bg-[#ea580c] hover:bg-orange-700 text-white font-bold py-4 [@media(max-height:800px)]:py-3 rounded-lg mt-4 [@media(max-height:800px)]:mt-2 transition-all shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-70"
         >
           {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}

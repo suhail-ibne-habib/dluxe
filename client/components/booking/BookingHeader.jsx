@@ -36,7 +36,7 @@ export default function BookingHeader() {
         </a>
 
         <div className="hidden lg:flex items-center gap-1 font-bold text-gray-300 border-l border-gray-700 pl-8">
-          USD <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+          EUR
         </div>
       </div>
     </div>

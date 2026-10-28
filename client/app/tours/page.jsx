@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { formatMoney } from "@/lib/currency";
 
 export default function ToursPage() {
   const [tours, setTours] = useState([]);
@@ -70,7 +71,7 @@ export default function ToursPage() {
                 <p className="mt-2 line-clamp-2 text-sm text-gray-500">{tour.summary}</p>
                 <div className="mt-4 flex items-end justify-between border-t border-gray-100 pt-4">
                   <p>
-                    <span className="text-2xl font-extrabold">${Number(tour.price).toLocaleString()}</span>
+                    <span className="text-2xl font-extrabold">{formatMoney(tour.price)}</span>
                     <span className="text-sm text-gray-400"> / person</span>
                   </p>
                   <span className="text-sm font-semibold text-[#6f9a32]">{tour.duration}</span>

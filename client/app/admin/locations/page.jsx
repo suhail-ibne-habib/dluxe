@@ -182,13 +182,13 @@ export default function LocationsPage() {
                           <button type="button" className="flex w-full items-center justify-between gap-3 text-left" onClick={() => togglePackage(index, id)}>
                             <span>
                               <span className="block text-sm font-medium">{pkg.name}</span>
-                              <span className="text-xs text-muted-foreground">Base ${Number(pkg.basePrice || 0).toLocaleString()}</span>
+                              <span className="text-xs text-muted-foreground">Base €{Number(pkg.basePrice || 0).toLocaleString()}</span>
                             </span>
                             <Badge variant={offered ? "default" : "outline"}>{offered ? "Offered" : "Hidden"}</Badge>
                           </button>
                           {offered ? (
                             <div className="mt-3">
-                              <Field label="Airport price (USD)">
+                              <Field label="Airport price (EUR)">
                                 <Input
                                   type="number"
                                   step="0.01"

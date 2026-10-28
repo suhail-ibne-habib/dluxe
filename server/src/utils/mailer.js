@@ -109,12 +109,12 @@ const sendLeadEmail = async (email, serviceType, packages) => {
   if (activePackages.length > 0) {
     packagesHtml = activePackages.map(p => `
       <div style="margin-bottom: 20px; padding: 15px; border-left: 4px solid #ea580c; background-color: #f9fafb;">
-        <h4 style="margin: 0 0 5px 0; color: #111827; font-size: 16px;">${p.name.toUpperCase()} <span style="float: right; color: #ea580c;">$${p.base_price || p.basePrice}</span></h4>
+        <h4 style="margin: 0 0 5px 0; color: #111827; font-size: 16px;">${p.name.toUpperCase()} <span style="float: right; color: #ea580c;">€${p.base_price || p.basePrice}</span></h4>
         <p style="margin: 0; color: #4b5563; font-size: 14px;">${p.description || 'Premium airport concierge experience.'}</p>
       </div>
     `).join('');
   } else {
-    packagesHtml = '<p style="color: #4b5563;">Our packages start from $474. Contact us for custom arrangements.</p>';
+    packagesHtml = '<p style="color: #4b5563;">Our packages start from €474. Contact us for custom arrangements.</p>';
   }
 
   const htmlContent = `

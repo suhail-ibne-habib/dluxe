@@ -9,6 +9,8 @@ import { z } from 'zod';
 import BookingHeader from '@/components/booking/BookingHeader';
 import ProgressBar from '@/components/booking/ProgressBar';
 import QuoteSidebar from '@/components/booking/QuoteSidebar';
+import SameDayNotice from '@/components/booking/SameDayNotice';
+import { isSameDay } from '@/lib/booking-dates';
 
 // Steps
 import BookingDetails from '@/components/booking/BookingDetails';
@@ -93,6 +95,7 @@ function BookingContent() {
   });
 
   const passengers = methods.watch('passengerCount') || 1;
+  const sameDay = isSameDay(date);
 
   useEffect(() => {
     const fetchPackages = async () => {
@@ -177,6 +180,7 @@ function BookingContent() {
   }, [searchParams, methods, availablePackages]);
 
   const handleNextStep = () => {
+    if (sameDay) return;
     setCurrentStep(prev => Math.min(prev + 1, 5));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -209,6 +213,7 @@ function BookingContent() {
   }
 
   const onSubmit = async (data) => {
+    if (sameDay) return;
     setIsSubmitting(true);
 
     const unitPrice = computedPrice;
@@ -281,10 +286,14 @@ function BookingContent() {
                   unitPrice={computedPrice}
                   selectedPkg={selectedPkg}
                 />
+                <div className="mt-6">
+                  <SameDayNotice show={sameDay} />
+                </div>
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  className="mt-6 w-full bg-[#2a3bb1] hover:bg-[#202d8f] text-white font-bold py-4 rounded-lg shadow-sm transition-colors text-sm tracking-wide"
+                  disabled={sameDay}
+                  className="mt-6 w-full bg-[#2a3bb1] hover:bg-[#202d8f] text-white font-bold py-4 rounded-lg shadow-sm transition-colors text-sm tracking-wide disabled:opacity-70"
                 >
                   Confirm & Continue to next step
                 </button>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formatMoney } from '@/lib/currency';
 
 export default function BookingDetails({ airport, date, passengers, activeService, setActiveService }) {
   const [packages, setPackages] = useState([]);
@@ -92,7 +93,7 @@ export default function BookingDetails({ airport, date, passengers, activeServic
             <div className="text-left pt-1">
               <h4 className="font-bold text-gray-900 mb-1">{p.name}</h4>
               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                Total USD ${getComputedPrice(p) * parseInt(passengers || '1')}
+                Total {formatMoney(getComputedPrice(p) * parseInt(passengers || '1'), { withCode: true })}
               </p>
             </div>
           </button>
@@ -131,10 +132,10 @@ export default function BookingDetails({ airport, date, passengers, activeServic
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total package price</p>
             <div className="flex flex-col gap-1">
               <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-black text-gray-900">USD {getComputedPrice(selectedPkg) * parseInt(passengers || '1')}</span>
+                <span className="text-4xl font-black text-gray-900">{formatMoney(getComputedPrice(selectedPkg) * parseInt(passengers || '1'), { withCode: true })}</span>
               </div>
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                {parseInt(passengers || '1')} {parseInt(passengers || '1') === 1 ? 'Passenger' : 'Passengers'} (@ ${getComputedPrice(selectedPkg)})
+                {parseInt(passengers || '1')} {parseInt(passengers || '1') === 1 ? 'Passenger' : 'Passengers'} (@ {formatMoney(getComputedPrice(selectedPkg))})
               </p>
             </div>
           </div>

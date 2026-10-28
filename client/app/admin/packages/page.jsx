@@ -81,7 +81,7 @@ export default function PackagesPage() {
         empty="No packages."
         columns={[
           { key: "name", header: "Name", cell: (row) => row.name },
-          { key: "price", header: "Base price", cell: (row) => `$${Number(row.basePrice || 0).toLocaleString()}` },
+          { key: "price", header: "Base price", cell: (row) => `€${Number(row.basePrice || 0).toLocaleString()}` },
           { key: "active", header: "Active", cell: (row) => row.isActive ? "Yes" : "No" },
           { key: "orders", header: "Orders", cell: (row) => row.totalOrders || 0 },
           { key: "actions", header: "", className: "text-right", cell: (row) => <RowActions onEdit={() => setEditing(row)} onDelete={() => remove(row.id)} /> },

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useContact } from '@/lib/use-contact';
+import { formatMoney } from '@/lib/currency';
 
 export default function QuoteSidebar({ airport, passengers, activeService, unitPrice, selectedPkg }) {
   const contact = useContact();
@@ -18,17 +19,17 @@ export default function QuoteSidebar({ airport, passengers, activeService, unitP
         <div className="space-y-4 text-sm font-semibold mb-6">
           <div className="flex justify-between text-gray-500">
             <span className="uppercase text-[10px] tracking-widest font-black">Passengers (x{count})</span>
-            <span className="text-gray-900">USD {price * count}</span>
+            <span className="text-gray-900">{formatMoney(price * count, { withCode: true })}</span>
           </div>
           <div className="flex justify-between text-gray-400 border-t border-gray-100 pt-3">
             <span className="text-[10px] uppercase font-bold tracking-widest">Rate per passenger</span>
-            <span>USD {price}</span>
+            <span>{formatMoney(price, { withCode: true })}</span>
           </div>
         </div>
         
         <div className="flex justify-between items-baseline pt-6 border-t border-gray-200">
           <span className="text-xs font-black uppercase text-gray-400 tracking-tighter self-end mb-1">Final Total</span>
-          <span className="text-4xl font-black text-gray-900 tracking-tight">USD {total}</span>
+          <span className="text-4xl font-black text-gray-900 tracking-tight">{formatMoney(total, { withCode: true })}</span>
         </div>
 
         <p className="text-xs text-gray-400 mt-2 leading-relaxed">

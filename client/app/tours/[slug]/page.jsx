@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import SameDayNotice from "@/components/booking/SameDayNotice";
+import { isSameDay, todayISO } from "@/lib/booking-dates";
+import { formatMoney } from "@/lib/currency";
 
 const emptyForm = { date: "", guests: "1", name: "", email: "", phone: "", notes: "" };
 
@@ -32,8 +35,14 @@ export default function TourPage() {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  const sameDay = isSameDay(form.date);
+
   async function submit(event) {
     event.preventDefault();
+    if (sameDay) {
+      setMessage("For same day booking please contact us via WhatsApp.");
+      return;
+    }
     setSending(true);
     setMessage("");
     try {
@@ -78,7 +87,7 @@ export default function TourPage() {
               <p className="text-lg text-gray-600">{tour.summary}</p>
               <p className="mt-4 whitespace-pre-line leading-relaxed text-gray-700">{tour.description}</p>
               <p className="mt-6 border-t border-gray-100 pt-6">
-                <span className="text-3xl font-extrabold">${Number(tour.price).toLocaleString()}</span>
+                <span className="text-3xl font-extrabold">{formatMoney(tour.price)}</span>
                 <span className="text-gray-400"> / person</span>
               </p>
             </article>
@@ -88,8 +97,9 @@ export default function TourPage() {
               <div className="mt-5 grid gap-3">
                 <label className="grid gap-1 text-sm font-semibold">
                   Date *
-                  <input required type="date" value={form.date} onChange={(event) => setField("date", event.target.value)} className="h-11 rounded-xl border border-gray-200 px-3 font-normal" />
+                  <input required type="date" min={todayISO()} value={form.date} onChange={(event) => setField("date", event.target.value)} className="h-11 rounded-xl border border-gray-200 px-3 font-normal" />
                 </label>
+                <SameDayNotice show={sameDay} />
                 <label className="grid gap-1 text-sm font-semibold">
                   Guests *
                   <input required type="number" min="1" max="20" value={form.guests} onChange={(event) => setField("guests", event.target.value)} className="h-11 rounded-xl border border-gray-200 px-3 font-normal" />
@@ -111,7 +121,7 @@ export default function TourPage() {
                   <textarea value={form.notes} onChange={(event) => setField("notes", event.target.value)} rows={3} placeholder="Hotel pickup or questions" className="rounded-xl border border-gray-200 px-3 py-2 font-normal" />
                 </label>
               </div>
-              <button disabled={sending} className="mt-5 h-11 w-full rounded-xl bg-[#ea580c] font-bold text-white" type="submit">
+              <button disabled={sending || sameDay} className="mt-5 h-11 w-full rounded-xl bg-[#ea580c] font-bold text-white disabled:opacity-70" type="submit">
                 {sending ? "Sending..." : "Send request"}
               </button>
               {message ? <p className="mt-3 text-sm text-gray-600">{message}</p> : null}

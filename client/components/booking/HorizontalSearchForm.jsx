@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 import AirportSearchField from "@/components/booking/AirportSearchField";
+import SameDayNotice from "@/components/booking/SameDayNotice";
+import { isSameDay, todayISO } from "@/lib/booking-dates";
 
 export default function HorizontalSearchForm({ defaultAirport, defaultAirportObj }) {
   const router = useRouter();
@@ -60,6 +62,8 @@ export default function HorizontalSearchForm({ defaultAirport, defaultAirportObj
   }, []);
 
   const selectedAirportName = watch("airport");
+  const selectedDate = watch("date");
+  const sameDay = isSameDay(selectedDate);
 
   // Dynamic IATA code extraction
   const getIataCode = (airportName) => {
@@ -108,6 +112,7 @@ export default function HorizontalSearchForm({ defaultAirport, defaultAirportObj
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onSubmit = async (data) => {
+    if (isSameDay(data.date)) return;
     setIsSubmitting(true);
     if (data.email) {
       try {
@@ -165,6 +170,7 @@ export default function HorizontalSearchForm({ defaultAirport, defaultAirportObj
         <div className="flex-1 relative flex items-center px-4 py-3 min-h-[56px] text-gray-700 bg-white">
           <input
             type="date"
+            min={todayISO()}
             {...register("date", { required: true })}
             placeholder="Service date"
             className="w-full appearance-none bg-transparent border-none focus:ring-0 outline-none font-medium text-sm text-gray-500 placeholder-gray-400 cursor-text"
@@ -196,12 +202,14 @@ export default function HorizontalSearchForm({ defaultAirport, defaultAirportObj
         </div>
       </div>
 
+      <SameDayNotice show={sameDay} />
+
       {/* Submit Button */}
       <div className="w-full mt-2">
         <button
           type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-[#3b5bdb] hover:bg-[#324db0] text-white font-bold py-4 rounded-lg transition-colors shadow-md flex justify-center items-center gap-2"
+          disabled={isSubmitting || sameDay}
+          className="w-full bg-[#3b5bdb] hover:bg-[#324db0] text-white font-bold py-4 rounded-lg transition-colors shadow-md flex justify-center items-center gap-2 disabled:opacity-70"
         >
           {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
           Check Price

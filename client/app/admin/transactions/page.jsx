@@ -46,7 +46,7 @@ export default function TransactionsPage() {
         columns={[
           { key: "id", header: "ID", cell: (row) => row.id },
           { key: "customer", header: "Customer", cell: (row) => row.customer_name || "—" },
-          { key: "amount", header: "Amount", cell: (row) => `$${Number(row.amount || 0).toLocaleString()}` },
+          { key: "amount", header: "Amount", cell: (row) => `€${Number(row.amount || 0).toLocaleString()}` },
           { key: "status", header: "Status", cell: (row) => row.status },
           { key: "actions", header: "", className: "text-right", cell: (row) => <RowActions onEdit={() => setEditing(row)} /> },
         ]}

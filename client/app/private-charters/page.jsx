@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import SameDayNotice from "@/components/booking/SameDayNotice";
+import { isSameDay, todayISO } from "@/lib/booking-dates";
 
 const airports = [
   "St. Maarten – SXM",
@@ -57,8 +59,16 @@ export default function PrivateChartersPage() {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  const sameDay =
+    isSameDay(form.departureDate) ||
+    (form.tripType === "Round Trip" && isSameDay(form.returnDate));
+
   async function submit(event) {
     event.preventDefault();
+    if (sameDay) {
+      setMessage("For same day booking please contact us via WhatsApp.");
+      return;
+    }
     setSending(true);
     setMessage("");
     try {
@@ -147,7 +157,7 @@ export default function PrivateChartersPage() {
               <div className="grid gap-2">
                 <FieldLabel>Departure Date & Time *</FieldLabel>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_7rem]">
-                  <input required type="date" value={form.departureDate} onChange={(event) => setField("departureDate", event.target.value)} className="h-12 min-w-0 w-full rounded-xl border border-gray-200 px-3 text-sm" />
+                  <input required type="date" min={todayISO()} value={form.departureDate} onChange={(event) => setField("departureDate", event.target.value)} className="h-12 min-w-0 w-full rounded-xl border border-gray-200 px-3 text-sm" />
                   <input required type="time" value={form.departureTime} onChange={(event) => setField("departureTime", event.target.value)} className="h-12 min-w-0 w-full rounded-xl border border-gray-200 px-3 text-sm" />
                 </div>
               </div>
@@ -165,11 +175,13 @@ export default function PrivateChartersPage() {
               <div className="grid gap-2">
                 <FieldLabel>Return Date & Time *</FieldLabel>
                 <div className="grid max-w-md grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_7rem]">
-                  <input required type="date" value={form.returnDate} onChange={(event) => setField("returnDate", event.target.value)} className="h-12 min-w-0 w-full rounded-xl border border-gray-200 px-3 text-sm" />
+                  <input required type="date" min={form.departureDate || todayISO()} value={form.returnDate} onChange={(event) => setField("returnDate", event.target.value)} className="h-12 min-w-0 w-full rounded-xl border border-gray-200 px-3 text-sm" />
                   <input required type="time" value={form.returnTime} onChange={(event) => setField("returnTime", event.target.value)} className="h-12 min-w-0 w-full rounded-xl border border-gray-200 px-3 text-sm" />
                 </div>
               </div>
             ) : null}
+
+            <SameDayNotice show={sameDay} />
 
             <div className="grid gap-2">
               <FieldLabel>Inbound / Outbound Connection</FieldLabel>
@@ -226,7 +238,7 @@ export default function PrivateChartersPage() {
               </div>
             </div>
 
-            <button disabled={sending} type="submit" className="mt-2 h-12 rounded-xl bg-[#ea580c] px-6 font-bold text-white md:w-fit">
+            <button disabled={sending || sameDay} type="submit" className="mt-2 h-12 rounded-xl bg-[#ea580c] px-6 font-bold text-white disabled:opacity-70 md:w-fit">
               {sending ? "Sending..." : "Send charter request"}
             </button>
             {message ? <p className="text-sm text-gray-600">{message}</p> : null}

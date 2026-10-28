@@ -76,7 +76,7 @@ export default function ReservationsPage() {
           { key: "email", header: "Email", cell: (row) => row.customerEmail },
           { key: "route", header: "Route", cell: (row) => `${row.fromAirport || "—"} → ${row.toAirport || "—"}` },
           { key: "status", header: "Status", cell: (row) => row.status },
-          { key: "amount", header: "Amount", cell: (row) => `$${Number(row.totalAmount || 0).toLocaleString()}` },
+          { key: "amount", header: "Amount", cell: (row) => `€${Number(row.totalAmount || 0).toLocaleString()}` },
           { key: "actions", header: "", className: "text-right", cell: (row) => <RowActions onEdit={() => setEditing(row)} onDelete={() => remove(row.id)} /> },
         ]}
       />
