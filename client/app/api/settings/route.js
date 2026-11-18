@@ -1,16 +1,29 @@
 import { NextResponse } from 'next/server';
-import { getFromServer } from '@/lib/client';
 
 export async function GET() {
   try {
-    const settings = await getFromServer('/settings');
+    const strapiBase = process.env.NEXT_PUBLIC_API_URL || 'https://dluxe.eracodex.io/api';
+    const strapiUrl = `${strapiBase}/setting`;
+
+    const headers = {};
+    if (process.env.STRAPI_SECRET_KEY) {
+      headers['Authorization'] = `Bearer ${process.env.STRAPI_SECRET_KEY}`;
+    }
+
+    const res = await fetch(strapiUrl, { headers, cache: 'no-store' });
+    if (!res.ok) {
+      // Return defaults gracefully rather than propagating the error
+      return NextResponse.json({ whatsapp: null });
+    }
+
+    const strapiData = await res.json();
+    const attrs = strapiData?.data || {};
+
     return NextResponse.json({
-      whatsapp: settings?.whatsapp || settings?.whatsapp_number || null,
-      contact_phone: settings?.contact_phone || null,
-      contact_email: settings?.contact_email || null,
+      whatsapp: attrs.whatsapp || null,
     });
   } catch (error) {
-    console.error('Error fetching settings:', error);
-    return NextResponse.json({ whatsapp: null, contact_phone: null, contact_email: null });
+    console.error('Error fetching settings from Strapi:', error);
+    return NextResponse.json({ whatsapp: null });
   }
 }

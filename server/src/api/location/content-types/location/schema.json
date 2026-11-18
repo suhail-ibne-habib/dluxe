@@ -1,0 +1,38 @@
+{
+  "kind": "collectionType",
+  "collectionName": "locations",
+  "info": {
+    "singularName": "location",
+    "pluralName": "locations",
+    "displayName": "Locations"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "country_name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "flag": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files"
+      ]
+    },
+    "isAvailable": {
+      "type": "boolean",
+      "default": true
+    },
+    "airports": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::airport.airport",
+      "mappedBy": "location"
+    }
+  }
+}

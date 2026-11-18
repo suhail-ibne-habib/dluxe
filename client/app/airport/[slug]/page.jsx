@@ -3,25 +3,7 @@ import React, { useEffect, useState, use } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import HorizontalSearchForm from "@/components/booking/HorizontalSearchForm";
-import AirportAbout from "@/components/airport/AirportAbout";
-import { formatMoney } from "@/lib/currency";
 import Head from 'next/head';
-
-function PackageDescription({ html, light }) {
-  const [open, setOpen] = useState(false);
-  if (!html || html === "<p><br></p>") return null;
-  return (
-    <div className="mb-6 relative z-10">
-      <div
-        className={`text-sm leading-relaxed ${light ? "text-gray-300" : "text-gray-600"} ${open ? "" : "line-clamp-3"}`}
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
-      <button type="button" onClick={() => setOpen((value) => !value)} className="mt-2 text-sm font-bold text-[#ea580c]">
-        {open ? "View less" : "View more"}
-      </button>
-    </div>
-  );
-}
 
 export default function DynamicAirportPage({ params }) {
   const { slug } = use(params);
@@ -29,7 +11,6 @@ export default function DynamicAirportPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [packages, setPackages] = useState([]);
-  const [pagePackages, setPagePackages] = useState(null);
   const [airportConfig, setAirportConfig] = useState(null);
   const [testimonials, setTestimonials] = useState([]);
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
@@ -85,19 +66,11 @@ export default function DynamicAirportPage({ params }) {
                    }
                }
 
-               let overrides = null;
-               try {
-                 overrides = typeof data.package_overrides === "string" ? JSON.parse(data.package_overrides) : data.package_overrides;
-               } catch (e) {
-                 overrides = null;
-               }
                if (config) {
                    setAirportConfig(config);
                    const activePkgs = allPkgs.filter(p => !!p.isActive);
-                   const hidden = overrides?.excluded || config.excludedPackages || [];
-                   const availablePkgs = activePkgs.filter(p => !hidden.map(Number).includes(Number(p._id || p.id)));
+                   const availablePkgs = activePkgs.filter(p => !(config.excludedPackages || []).includes(p._id || p.id));
                    setPackages(availablePkgs);
-                   setPagePackages(overrides);
                }
             }
           } catch (e) {
@@ -185,37 +158,31 @@ export default function DynamicAirportPage({ params }) {
           </div>
 
           {packages.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
-              {packages.map((pkg) => {
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {packages.map((pkg, idx) => {
                 const pkgId = pkg._id || pkg.id;
                 let price = pkg.basePrice;
-                const pagePrice = pagePackages?.prices?.[pkgId] ?? pagePackages?.prices?.[String(pkgId)];
-                if (pagePrice) price = pagePrice;
-                else if (airportConfig && airportConfig.customPricing) {
+                if (airportConfig && airportConfig.customPricing) {
                    const cp = airportConfig.customPricing.find(c => parseInt(c.package_id) === parseInt(pkgId));
                    if (cp && cp.custom_price) price = cp.custom_price;
                 }
-                const isPopular = Boolean(pkg.isPopular) || pkg.name.toLowerCase().includes('gold') || pkg.name.toLowerCase().includes('terminal');
-                const features = pkg.features || pkg.services || [];
+                const isPopular = pkg.name.toLowerCase().includes('gold') || pkg.name.toLowerCase().includes('terminal');
+                const isBlack = pkg.name.toLowerCase().includes('black') || pkg.name.toLowerCase().includes('suite');
 
                 return (
-                  <div key={pkgId} className={`rounded-2xl p-8 pt-10 relative group transition-shadow hover:shadow-xl flex flex-col ${isPopular ? "bg-[#0f172a] text-white shadow-2xl shadow-[#0f172a]/20" : "bg-white border border-gray-200"}`}>
-                    <div className={`absolute top-0 right-0 w-32 h-32 rounded-bl-full pointer-events-none ${isPopular ? "bg-[#ea580c] opacity-20" : "bg-gray-100 opacity-50"}`}></div>
+                  <div key={pkgId} className={`rounded-2xl p-8 relative overflow-hidden group transition-shadow hover:shadow-xl ${isPopular ? "bg-[#0f172a] text-white shadow-2xl shadow-[#0f172a]/20" : "bg-white border border-gray-200"}`}>
+                    <div className={`absolute top-0 right-0 w-32 h-32 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110 ${isPopular ? "bg-[#ea580c] opacity-20" : "bg-gray-100 opacity-50"}`}></div>
                     {isPopular && (
-                        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#ea580c] text-white text-xs font-bold uppercase tracking-wider py-1 px-4 rounded-full shadow-md z-20 whitespace-nowrap">Most Popular</div>
+                        <div className="absolute top-0 right-1/2 translate-x-1/2 -mt-3 bg-[#ea580c] text-white text-xs font-bold uppercase tracking-wider py-1 px-4 rounded-full shadow-md z-20">Most Popular</div>
                     )}
-                    <h3 className={`text-2xl font-bold mb-2 relative z-10 ${isPopular ? "text-white mt-4" : "text-[#0f172a]"}`}>{pkg.name}</h3>
-                    <p className="text-[#ea580c] font-semibold mb-4 relative z-10">{formatMoney(price)} / passenger</p>
-                    <PackageDescription html={pkg.description} light={isPopular} />
-                    <ul className={`space-y-4 mb-8 relative z-10 flex-1 ${isPopular ? "text-gray-300" : "text-gray-600"}`}>
-                      {features.map((feature, i) => (
-                        <li key={i} className="flex items-start gap-3">
-                          <svg className={`w-5 h-5 mt-0.5 shrink-0 ${isPopular ? "text-[#ea580c]" : "text-green-500"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                          <span dangerouslySetInnerHTML={{ __html: feature.title || feature }} />
-                        </li>
+                    <h3 className={`text-2xl font-bold mb-2 relative z-10 ${isPopular ? "text-white" : "text-[#0f172a]"}`}>{pkg.name}</h3>
+                    <p className="text-[#ea580c] font-semibold mb-6 flex items-center gap-2 relative z-10">${price} / passenger</p>
+                    <ul className={`space-y-4 mb-8 relative z-10 ${isPopular ? "text-gray-300" : "text-gray-600"}`}>
+                      {(pkg.services || []).slice(0, 4).map((srv, i) => (
+                        <li key={i} className="flex items-start gap-3"><svg className={`w-5 h-5 mt-0.5 shrink-0 ${isPopular ? "text-[#ea580c]" : "text-green-500"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>{srv.title || srv}</li>
                       ))}
                     </ul>
-                    <a href={`/booking?airport=${encodeURIComponent(page.airport_name || page.page_title)}&service=${encodeURIComponent(pkg.name)}`} className={`block w-full py-3 px-4 rounded-md text-center font-bold transition-colors relative z-10 mt-auto ${isPopular ? "bg-[#ea580c] hover:bg-orange-500 text-white" : "bg-white border border-gray-300 text-[#0f172a] hover:border-[#ea580c] hover:text-[#ea580c]"}`}>Book {pkg.name.split(' ')[0]}</a>
+                    <a href={`/booking?airport=${encodeURIComponent(page.airport_name || page.page_title)}&service=${encodeURIComponent(pkg.name)}`} className={`block w-full py-3 px-4 rounded-md text-center font-bold transition-colors relative z-10 ${isPopular ? "bg-[#ea580c] hover:bg-orange-500 text-white" : "bg-white border border-gray-300 text-[#0f172a] hover:border-[#ea580c] hover:text-[#ea580c]"}`}>Book {pkg.name.split(' ')[0]}</a>
                   </div>
                 );
               })}
@@ -235,9 +202,9 @@ export default function DynamicAirportPage({ params }) {
                 <a href="/booking" className="block w-full py-3 px-4 bg-white border border-gray-300 rounded-md text-center font-bold text-[#0f172a] hover:border-[#ea580c] hover:text-[#ea580c] transition-colors relative z-10">Book Silver</a>
               </div>
 
-              <div className="bg-[#0f172a] text-white rounded-2xl p-8 pt-10 shadow-2xl relative shadow-[#0f172a]/20 group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#ea580c] rounded-bl-full pointer-events-none opacity-20"></div>
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#ea580c] text-white text-xs font-bold uppercase tracking-wider py-1 px-4 rounded-full shadow-md z-20 whitespace-nowrap">Most Popular</div>
+              <div className="bg-[#0f172a] text-white rounded-2xl p-8 shadow-2xl relative shadow-[#0f172a]/20 group overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#ea580c] rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110 opacity-20"></div>
+                <div className="absolute top-0 right-1/2 translate-x-1/2 -mt-3 bg-[#ea580c] text-white text-xs font-bold uppercase tracking-wider py-1 px-4 rounded-full shadow-md z-20">Most Popular</div>
                 <h3 className="text-2xl font-bold mb-2 relative z-10">Gold Package</h3>
                 <p className="text-[#ea580c] font-semibold mb-6 flex items-center gap-2 relative z-10">VIP Terminal</p>
                 <ul className="space-y-4 mb-8 text-gray-300 relative z-10">
@@ -316,30 +283,10 @@ export default function DynamicAirportPage({ params }) {
       )}
 
       {/* Dynamic Custom Content from Editor */}
-      {(pagePackages?.extras || []).filter((extra) => extra.name).length > 0 && (
-        <section className="pb-20 bg-[#f8fafc]">
-          <div className="max-w-7xl mx-auto px-4 md:px-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-            {pagePackages.extras.filter((extra) => extra.name).map((extra, index) => (
-              <div key={index} className="bg-white border border-gray-200 rounded-2xl p-8">
-                <h3 className="text-2xl font-bold text-[#0f172a] mb-2">{extra.name}</h3>
-                <p className="text-[#ea580c] font-semibold mb-6">{formatMoney(extra.price)} / passenger</p>
-                <p className="text-gray-600 mb-8">{extra.description}</p>
-                <a href={`/booking?airport=${encodeURIComponent(page.airport_name || page.page_title)}&service=${encodeURIComponent(extra.name)}`} className="block w-full py-3 px-4 bg-white border border-gray-300 rounded-md text-center font-bold text-[#0f172a]">Book</a>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
       {page.content && (
-        <AirportAbout title={page.page_title} content={page.content} airportName={page.airport_name || page.page_title} />
-      )}
-
-      {page.additional_info && (
-        <section className="py-16 bg-white">
-          <div className="max-w-4xl mx-auto px-4 md:px-12 text-gray-600">
-            <h2 className="text-3xl font-bold text-[#0f172a] mb-6">Additional information</h2>
-            <div dangerouslySetInnerHTML={{ __html: page.additional_info }} />
+        <section className="py-16 bg-[#f8fafc]">
+          <div className="max-w-7xl mx-auto px-4 md:px-12 prose max-w-none text-gray-600 dynamic-content-block">
+            <div dangerouslySetInnerHTML={{ __html: page.content }}></div>
           </div>
         </section>
       )}

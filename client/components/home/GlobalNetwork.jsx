@@ -41,8 +41,8 @@ export default function GlobalNetwork() {
             <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-2">Global Network</h2>
             <p className="text-gray-500">Available in over 150+ international airports.</p>
           </div>
-          <a href="#" className="flex items-center gap-2 text-[#ea580c] font-semibold hover:text-orange-700 transition-colors">
-            View All Destinations
+          <a href="/locations" className="flex items-center gap-2 text-[#ea580c] font-semibold hover:text-orange-700 transition-colors">
+            View All Airport VIP Hubs
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
           </a>
         </div>

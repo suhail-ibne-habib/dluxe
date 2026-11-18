@@ -1,25 +1,39 @@
 {
-  "name": "D'LUXE-backend",
-  "version": "1.0.0",
-  "description": "Node.js/Express backend for D'LUXE",
-  "main": "src/server.js",
+  "name": "server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A Strapi application",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "seed": "node src/scripts/seed.js"
+    "build": "strapi build",
+    "console": "strapi console",
+    "deploy": "strapi deploy",
+    "dev": "strapi develop",
+    "develop": "strapi develop",
+    "start": "strapi start",
+    "strapi": "strapi",
+    "upgrade": "npx @strapi/upgrade latest",
+    "upgrade:dry": "npx @strapi/upgrade latest --dry"
   },
   "dependencies": {
-    "bcryptjs": "^3.0.3",
-    "better-auth": "^1.7.6",
-    "cors": "^2.8.5",
-    "dotenv": "^16.6.1",
-    "express": "^4.21.2",
-    "jose": "^6.2.2",
-    "jsonwebtoken": "^9.0.2",
-    "mongodb": "^6.21.0",
-    "nodemailer": "^8.0.4"
+    "@strapi/client": "^1.6.2",
+    "@strapi/database": "5.52.0",
+    "@strapi/plugin-cloud": "5.52.0",
+    "@strapi/plugin-documentation": "^5.52.2",
+    "@strapi/plugin-users-permissions": "5.52.0",
+    "@strapi/strapi": "5.52.0",
+    "csv-parse": "^7.0.2",
+    "mysql2": "3.20.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-router-dom": "^6.30.3",
+    "styled-components": "^6.0.0"
   },
-  "devDependencies": {
-    "nodemon": "^3.1.9"
+  "engines": {
+    "node": ">=20.0.0 <=26.x.x",
+    "npm": ">=6.0.0"
+  },
+  "strapi": {
+    "uuid": "8631dd65-a54e-4c42-bebe-65a7dc94ce60",
+    "installId": "c8780df9ce22e6f7f8693dfbd60c4682e595ce795b9f1b2d20fd19f68f042b06"
   }
 }

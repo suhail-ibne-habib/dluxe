@@ -1,6 +1,6 @@
 "use server";
 
-import { fetchAPI, API_BASE_URL } from '@/lib/api';
+import { fetchAPI } from '@/lib/api';
 import crypto from 'crypto';
 
 function formatToMySQLDate(dateStr) {
@@ -56,11 +56,63 @@ export async function submitBooking(data, existingId = null) {
       notes: `Airline: ${data.airline || 'N/A'}, Flight: ${data.flightNumber || 'N/A'}. ${data.specialRequirements || ''}`
     };
 
-    const bookingResult = await fetchAPI(existingId ? `/reservations/${existingId}` : '/reservations', {
-      method: existingId ? 'PUT' : 'POST',
-      body: JSON.stringify(reservationData),
+    // Fetch airports from Strapi to match the selected airport by name
+    const STRAPI_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://dluxe.eracodex.io/api';
+
+    let strapiAirportId = 2; // fallback
+    try {
+      const airportRes = await fetch(`${STRAPI_BASE}/airports`);
+      if (airportRes.ok) {
+        const airportsData = await airportRes.json();
+        const matched = (airportsData.data || []).find(a => 
+          data.airport && a.airportName && a.airportName.toLowerCase().includes(data.airport.toLowerCase())
+        );
+        if (matched) {
+          strapiAirportId = matched.id;
+        } else if (airportsData.data && airportsData.data.length > 0) {
+          strapiAirportId = airportsData.data[0].id;
+        }
+      }
+    } catch (e) {
+      console.error("Failed to fetch/match airports in Strapi:", e);
+    }
+
+    // Format departure date to ISO format
+    let departureDate = new Date().toISOString();
+    const formattedDate = formatToMySQLDate(data.date);
+    if (formattedDate) {
+      departureDate = new Date(`${formattedDate}T12:00:00.000Z`).toISOString();
+    }
+
+    const strapiPayload = {
+      data: {
+        departure: departureDate,
+        reservation_status: 'Pending',
+        payment: 'Unpaid',
+        route: strapiAirportId,
+        package: parseInt(data.packageId) || 2
+      }
+    };
+
+    let strapiResponse;
+    const url = existingId ? `${STRAPI_BASE}/reservations/${existingId}` : `${STRAPI_BASE}/reservations`;
+    const method = existingId ? 'PUT' : 'POST';
+
+    strapiResponse = await fetch(url, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(strapiPayload),
     });
-    const bookingId = existingId || bookingResult.id;
+
+    if (!strapiResponse.ok) {
+      const errText = await strapiResponse.text();
+      throw new Error(`Strapi booking error: ${errText}`);
+    }
+
+    const bookingResult = await strapiResponse.json();
+    const bookingId = existingId || bookingResult.data.id;
 
     // 3. Auto-Registration Logic via PHP API
     try {
@@ -68,23 +120,7 @@ export async function submitBooking(data, existingId = null) {
 
       if (!existingUser) {
         // Create new user
-        const tempPassword = crypto.randomBytes(6).toString('hex');
-        try {
-          const signUp = await fetch(`${API_BASE_URL}/auth/sign-up/email`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: reservationData.customerName,
-              email: data.email,
-              password: tempPassword,
-            }),
-          });
-          if (!signUp.ok) {
-            console.error('[AUTH] better-auth signup skipped:', await signUp.text());
-          }
-        } catch (signUpError) {
-          console.error('[AUTH] better-auth signup skipped:', signUpError.message);
-        }
+        const tempPassword = crypto.randomBytes(4).toString('hex');
         await fetchAPI('/user', {
           method: 'POST',
           body: JSON.stringify({

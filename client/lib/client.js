@@ -1,12 +1,8 @@
-import { API_BASE_URL, fetchWithTimeout } from './api';
+import { strapi } from '@strapi/client';
 
-export async function getFromServer(path, init = {}) {
-  const response = await fetchWithTimeout(`${API_BASE_URL}${path}`, {
-    cache: 'no-store',
-    ...init,
-  });
-  if (!response.ok) {
-    throw new Error(`Request failed: ${response.status}`);
-  }
-  return response.json();
-}
+const client = strapi({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://dluxe.eracodex.io/api',
+  auth: process.env.STRAPI_SECRET_KEY ? { token: process.env.STRAPI_SECRET_KEY } : undefined,
+});
+
+export default client;

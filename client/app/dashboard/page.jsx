@@ -1,7 +1,5 @@
 "use client";
 
-import { apiFetch } from '@/lib/api';
-
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
@@ -17,66 +15,62 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-import { authClient, clearSessionToken } from '@/lib/auth-client';
-
 export default function UserDashboard() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [bookingsError, setBookingsError] = useState("");
-  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '' });
-  const [passwordMessage, setPasswordMessage] = useState('');
-  const { data: session, isPending } = authClient.useSession();
+  const [user, setUser] = useState(null);
   const router = useRouter();
-  const user = session?.user;
 
   useEffect(() => {
-    if (isPending) return;
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-
     const fetchUserData = async () => {
       try {
-        const res = await apiFetch(`/api/reservations?email=${encodeURIComponent(user.email)}`);
+        const getCookie = (name) => {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop().split(';').shift();
+        };
+        const token = getCookie('userToken');
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/bookings`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         if (res.ok) {
           const data = await res.json();
-          setBookings(Array.isArray(data) ? data : []);
+          setBookings(data);
+          // Simple user derivation for UI
+          if (data.length > 0) {
+            setUser({ name: data[0].customerName, email: data[0].customerEmail });
+          }
         } else {
-          setBookingsError("Bookings could not be loaded. The rest of your account is still available.");
+          router.push('/login');
         }
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
-        setBookingsError("Bookings could not be loaded. The rest of your account is still available.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchUserData();
-  }, [router, user, isPending]);
+  }, [router]);
 
   const handleLogout = async () => {
-    await authClient.signOut();
-    clearSessionToken();
-    window.location.href = '/login';
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, { method: 'POST' });
+    router.push('/login');
   };
 
-  const handlePasswordChange = async (event) => {
-    event.preventDefault();
-    setPasswordMessage('');
-    const { error } = await authClient.changePassword({
-      currentPassword: passwordForm.currentPassword,
-      newPassword: passwordForm.newPassword,
-      revokeOtherSessions: true,
-    });
-    if (error) {
-      setPasswordMessage(error.message || 'Could not change the password');
-      return;
-    }
-    setPasswordForm({ currentPassword: '', newPassword: '' });
-    setPasswordMessage('Password updated.');
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
+          <p className="text-gray-500 font-medium font-sans">Syncing Mission Data...</p>
+        </div>
+      </div>
+    );
+  }
 
   const upcomingBookings = bookings.filter(b => b.status !== 'Completed' && b.status !== 'Cancelled');
   const pastBookings = bookings.filter(b => b.status === 'Completed' || b.status === 'Cancelled');
@@ -124,12 +118,6 @@ export default function UserDashboard() {
               </h2>
             </div>
 
-            {bookingsError && (
-              <p className="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">{bookingsError}</p>
-            )}
-            {!bookingsError && loading && (
-              <p className="text-sm text-gray-500">Loading your bookings...</p>
-            )}
             {upcomingBookings.length > 0 ? (
               <div className="space-y-4">
                 {upcomingBookings.map((booking) => (
@@ -196,33 +184,6 @@ export default function UserDashboard() {
           {/* Sidebar / Benefits */}
           <div className="space-y-8">
             {/* Quick Support */}
-            <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Change password</h3>
-              <form onSubmit={handlePasswordChange} className="space-y-3">
-                <input
-                  type="password"
-                  minLength={8}
-                  placeholder="Current password"
-                  value={passwordForm.currentPassword}
-                  onChange={(event) => setPasswordForm({ ...passwordForm, currentPassword: event.target.value })}
-                  className="w-full px-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-orange-200"
-                  required
-                />
-                <input
-                  type="password"
-                  minLength={8}
-                  placeholder="New password"
-                  value={passwordForm.newPassword}
-                  onChange={(event) => setPasswordForm({ ...passwordForm, newPassword: event.target.value })}
-                  className="w-full px-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-orange-200"
-                  required
-                />
-                {passwordMessage && <p className="text-sm text-gray-600">{passwordMessage}</p>}
-                <button type="submit" className="w-full py-3 bg-gray-900 hover:bg-orange-600 text-white font-bold rounded-2xl">
-                  Update password
-                </button>
-              </form>
-            </div>
             <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Need Help?</h3>
               <p className="text-gray-500 text-sm mb-6 leading-relaxed">Your dedicated concierge team is available 24/7 for any changes or delays.</p>

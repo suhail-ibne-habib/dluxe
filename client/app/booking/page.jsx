@@ -9,8 +9,6 @@ import { z } from 'zod';
 import BookingHeader from '@/components/booking/BookingHeader';
 import ProgressBar from '@/components/booking/ProgressBar';
 import QuoteSidebar from '@/components/booking/QuoteSidebar';
-import SameDayNotice from '@/components/booking/SameDayNotice';
-import { isSameDay } from '@/lib/booking-dates';
 
 // Steps
 import BookingDetails from '@/components/booking/BookingDetails';
@@ -95,7 +93,6 @@ function BookingContent() {
   });
 
   const passengers = methods.watch('passengerCount') || 1;
-  const sameDay = isSameDay(date);
 
   useEffect(() => {
     const fetchPackages = async () => {
@@ -180,7 +177,6 @@ function BookingContent() {
   }, [searchParams, methods, availablePackages]);
 
   const handleNextStep = () => {
-    if (sameDay) return;
     setCurrentStep(prev => Math.min(prev + 1, 5));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -213,7 +209,6 @@ function BookingContent() {
   }
 
   const onSubmit = async (data) => {
-    if (sameDay) return;
     setIsSubmitting(true);
 
     const unitPrice = computedPrice;
@@ -261,8 +256,8 @@ function BookingContent() {
       <ProgressBar currentStep={currentStep} />
 
       <FormProvider {...methods}>
-        <main className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-10 md:px-12 lg:flex-row">
-          <div className="min-w-0 lg:w-2/3">
+        <main className="max-w-7xl mx-auto px-4 md:px-12 py-10 flex flex-col lg:flex-row gap-8">
+          <div className="lg:w-2/3">
             {currentStep > 1 && (
               <button
                 type="button"
@@ -286,14 +281,10 @@ function BookingContent() {
                   unitPrice={computedPrice}
                   selectedPkg={selectedPkg}
                 />
-                <div className="mt-6">
-                  <SameDayNotice show={sameDay} />
-                </div>
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  disabled={sameDay}
-                  className="mt-6 w-full bg-[#2a3bb1] hover:bg-[#202d8f] text-white font-bold py-4 rounded-lg shadow-sm transition-colors text-sm tracking-wide disabled:opacity-70"
+                  className="mt-6 w-full bg-[#2a3bb1] hover:bg-[#202d8f] text-white font-bold py-4 rounded-lg shadow-sm transition-colors text-sm tracking-wide"
                 >
                   Confirm & Continue to next step
                 </button>
@@ -318,7 +309,7 @@ function BookingContent() {
             </form>
           </div>
 
-          <div className="min-w-0 lg:w-1/3">
+          <div className="lg:w-1/3">
             <div className="sticky top-10">
               <QuoteSidebar
                 airport={airport}

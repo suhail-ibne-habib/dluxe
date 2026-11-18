@@ -1,16 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { api } from '@/lib/api';
 
 export default function Step2FlightInfo({ onNext }) {
   const { register, trigger, formState: { errors } } = useFormContext();
-  const [airlines, setAirlines] = useState([]);
-
-  useEffect(() => {
-    api.get('/api/airlines')
-      .then(({ data }) => setAirlines((Array.isArray(data) ? data : []).filter((airline) => airline.isActive)))
-      .catch(() => setAirlines([]));
-  }, []);
 
   const handleNext = async () => {
     // Validate only this step's fields before proceeding
@@ -37,11 +29,10 @@ export default function Step2FlightInfo({ onNext }) {
               className={`w-full border ${errors.airline ? 'border-red-500 bg-red-50 focus:ring-red-200' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-100'} rounded-lg px-4 py-3.5 outline-none focus:ring-2 transition-all appearance-none cursor-pointer bg-white text-gray-700`}
             >
               <option value="">Enter airline name</option>
-              {airlines.map((airline) => (
-                <option key={airline.id} value={airline.name}>
-                  {airline.code ? `${airline.name} (${airline.code})` : airline.name}
-                </option>
-              ))}
+              <option value="Delta">Delta Airlines</option>
+              <option value="American">American Airlines</option>
+              <option value="United">United Airlines</option>
+              <option value="KLM">KLM Royal Dutch Airlines</option>
             </select>
             <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>

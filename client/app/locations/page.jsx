@@ -84,11 +84,14 @@ export default function LocationsPage() {
         </div>
 
         <div className="max-w-4xl mx-auto px-4 relative z-10 text-center">
+          <span className="inline-block px-4 py-1.5 bg-[#ea580c]/20 border border-[#ea580c]/40 rounded-full text-xs font-bold tracking-widest text-[#ea580c] mb-4 uppercase">
+            Global Airport VIP Directory
+          </span>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 shadow-sm">
-            World's leading Meet & Greet service
+            Airport VIP Concierge & Fast Track
           </h1>
           <p className="text-lg text-gray-200 mb-8 font-medium">
-            Enter your airport to see the service cost
+            Enter your airport to see the VIP service cost and availability
           </p>
           
           <div className="relative max-w-2xl mx-auto">
@@ -109,7 +112,7 @@ export default function LocationsPage() {
       {/* Popular Destinations */}
       {!searchQuery && (
         <section className="py-16 max-w-7xl mx-auto px-4 md:px-12 border-b border-gray-100">
-          <h2 className="text-2xl font-bold text-center mb-10 text-[#0f172a] uppercase tracking-wider">Popular Destinations</h2>
+          <h2 className="text-2xl font-bold text-center mb-10 text-[#0f172a] uppercase tracking-wider">Popular Airport VIP Destinations</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {popularDestinations.map((loc, idx) => (
               <a 
@@ -138,7 +141,7 @@ export default function LocationsPage() {
       {/* All Destinations Directory */}
       <section className="py-16 max-w-7xl mx-auto px-4 md:px-12">
         <h2 className="text-2xl font-bold text-center mb-12 text-[#0f172a] uppercase tracking-wider">
-          {searchQuery ? "Search Results" : "All Destinations"}
+          {searchQuery ? "Search Results" : "All Airport VIP Destinations"}
         </h2>
         
 

@@ -1,18 +1,18 @@
 "use client";
 import React from "react";
+import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0f172a] text-gray-400 py-16">
+    <footer className="bg-[#0f172a] text-gray-400 py-16 border-t border-gray-800">
       <div className="max-w-7xl mx-auto px-4 md:px-12 grid grid-cols-1 md:grid-cols-12 gap-12">
         {/* Logo Column */}
         <div className="md:col-span-4">
-          <a href="/" className="inline-flex items-center gap-2 mb-6 hover:opacity-80 transition-opacity">
-            {/* Logo Image */}
+          <Link href="/" className="inline-flex items-center gap-2 mb-6 hover:opacity-80 transition-opacity">
             <img src="/dluxe-logo.jpg" alt="D'LUXE Logo" className="h-20 w-auto object-contain rounded-xl shadow-lg" />
-          </a>
-          <p className="text-sm leading-relaxed mb-8 max-w-xs">
-            Providing elite airport concierge and VIP terminal services globally. Experience the pinnacle of luxury travel.
+          </Link>
+          <p className="text-sm leading-relaxed mb-6 max-w-xs">
+            Providing elite airport concierge, VIP terminal services, and private aircraft charters globally. Experience the pinnacle of luxury travel.
           </p>
           <div className="flex gap-4">
             <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-[#ea580c] hover:text-white transition-colors">
@@ -27,25 +27,40 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="md:col-span-4">
-          <h4 className="text-white font-bold mb-6 tracking-wide uppercase text-sm">Popular Airports</h4>
+        {/* Quick Navigation Column */}
+        <div className="md:col-span-3">
+          <h4 className="text-white font-bold mb-6 tracking-wide uppercase text-sm">Navigation</h4>
           <ul className="space-y-3 text-sm">
-            <li><a href="/locations/sint-maarten" className="hover:text-[#ea580c] transition-colors">SXM - Princess Juliana, Sint Maarten</a></li>
-            <li><a href="/locations/saint-barths" className="hover:text-[#ea580c] transition-colors">SBH - Saint Barthélemy Airport</a></li>
-            <li><a href="/airport/london-heathrow" className="hover:text-[#ea580c] transition-colors">LHR - London Heathrow, UK</a></li>
-            <li><a href="/airport/paris-cdg" className="hover:text-[#ea580c] transition-colors">CDG - Paris Charles de Gaulle</a></li>
+            <li><Link href="/services" className="hover:text-[#ea580c] transition-colors">Our Services & Packages</Link></li>
+            <li><Link href="/locations" className="hover:text-[#ea580c] transition-colors">Airport VIP</Link></li>
+            <li><Link href="/charter" className="hover:text-[#ea580c] transition-colors">Private Jet Charter</Link></li>
+            <li><Link href="/#reviews" className="hover:text-[#ea580c] transition-colors">Client Reviews</Link></li>
+            <li><Link href="/contact" className="hover:text-[#ea580c] transition-colors">Contact Us</Link></li>
           </ul>
         </div>
-        <div className="md:col-span-4 md:translate-y-8">
-          <ul className="space-y-3 text-sm">
-            <li><a href="/airport/frankfurt-fra" className="hover:text-[#ea580c] transition-colors">FRA - Frankfurt, Germany</a></li>
-            <li><a href="/airport/new-york-jfk" className="hover:text-[#ea580c] transition-colors">JFK - New York, USA</a></li>
-            <li><a href="/airport/cancun-cun" className="hover:text-[#ea580c] transition-colors">CUN - Cancun, Mexico</a></li>
-            <li><a href="/rentals" className="hover:text-[#ea580c] transition-colors">Luxury car rental</a></li>
-            <li><a href="/tours" className="hover:text-[#ea580c] transition-colors">Island tours</a></li>
-            <li><a href="/private-charters" className="hover:text-[#ea580c] transition-colors">Private charters</a></li>
-            <li><a href="/locations" className="text-[#ea580c] hover:text-white font-semibold flex items-center gap-1 transition-colors mt-2">View All Locations <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></a></li>
-          </ul>
+
+        {/* Popular Airports Column */}
+        <div className="md:col-span-5">
+          <h4 className="text-white font-bold mb-6 tracking-wide uppercase text-sm">Popular Airport VIP Hubs</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <ul className="space-y-3">
+              <li><Link href="/locations/sint-maarten" className="hover:text-[#ea580c] transition-colors">SXM - Princess Juliana, Sint Maarten</Link></li>
+              <li><Link href="/locations/saint-barths" className="hover:text-[#ea580c] transition-colors">SBH - Saint Barthélemy Airport</Link></li>
+              <li><Link href="/airport/london-heathrow" className="hover:text-[#ea580c] transition-colors">LHR - London Heathrow, UK</Link></li>
+              <li><Link href="/airport/paris-cdg" className="hover:text-[#ea580c] transition-colors">CDG - Paris Charles de Gaulle</Link></li>
+            </ul>
+            <ul className="space-y-3">
+              <li><Link href="/airport/frankfurt-fra" className="hover:text-[#ea580c] transition-colors">FRA - Frankfurt, Germany</Link></li>
+              <li><Link href="/airport/new-york-jfk" className="hover:text-[#ea580c] transition-colors">JFK - New York, USA</Link></li>
+              <li><Link href="/airport/cancun-cun" className="hover:text-[#ea580c] transition-colors">CUN - Cancun, Mexico</Link></li>
+              <li>
+                <Link href="/locations" className="text-[#ea580c] hover:text-white font-semibold flex items-center gap-1 transition-colors mt-2">
+                  <span>View All Airport VIP Locations</span>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                </Link>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
 

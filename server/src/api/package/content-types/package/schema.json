@@ -1,0 +1,34 @@
+{
+  "kind": "collectionType",
+  "collectionName": "packages",
+  "info": {
+    "singularName": "package",
+    "pluralName": "packages",
+    "displayName": "Packages"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "price": {
+      "type": "decimal",
+      "required": true
+    },
+    "isAvailable": {
+      "type": "boolean",
+      "required": true,
+      "default": true
+    },
+    "isPopular": {
+      "type": "boolean"
+    },
+    "Features": {
+      "type": "blocks"
+    }
+  }
+}

@@ -1,146 +1,188 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { toast } from "sonner";
-import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-
-const schema = z.object({
-  whatsapp: z.string().min(6, "Enter a WhatsApp number"),
-  contact_phone: z.string().optional(),
-  contact_email: z.union([z.literal(""), z.string().email("Enter a valid email")]).optional(),
-  smtp_host: z.string().min(1, "SMTP host is required"),
-  smtp_port: z.coerce.number().min(1, "Port is required"),
-  smtp_secure: z.boolean(),
-  smtp_user: z.string().min(3, "SMTP user is required"),
-  smtp_pass: z.string().optional(),
-  mail_from: z.string().min(3, "From address is required"),
-});
+import React, { useState, useEffect } from 'react';
 
 export default function SettingsPage() {
-  const [passSet, setPassSet] = useState(false);
-  const form = useForm({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      whatsapp: "",
-      contact_phone: "",
-      contact_email: "",
-      smtp_host: "",
-      smtp_port: 587,
-      smtp_secure: false,
-      smtp_user: "",
-      smtp_pass: "",
-      mail_from: "",
-    },
+  const [settings, setSettings] = useState({
+    smtp_host: '',
+    smtp_port: '',
+    smtp_user: '',
+    smtp_pass: '',
+    smtp_secure: 'true',
+    mail_from: '',
+    whatsapp_number: ''
   });
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
-    api.get("/api/settings").then(({ data }) => {
-      setPassSet(Boolean(data.smtp_pass_set));
-      form.reset({
-        whatsapp: data.whatsapp || data.whatsapp_number || "",
-        contact_phone: data.contact_phone || "",
-        contact_email: data.contact_email || "",
-        smtp_host: data.smtp_host || "",
-        smtp_port: Number(data.smtp_port || 587),
-        smtp_secure: data.smtp_secure === true || data.smtp_secure === "true",
-        smtp_user: data.smtp_user || "",
-        smtp_pass: "",
-        mail_from: data.mail_from || "",
-      });
-    }).catch((error) => {
-      toast.error(error.response?.data?.message || "Could not load settings");
-    });
-  }, [form]);
+    fetchSettings();
+  }, []);
 
-  async function onSubmit(values) {
-    const payload = {
-      whatsapp: values.whatsapp,
-      whatsapp_number: values.whatsapp,
-      contact_phone: values.contact_phone || "",
-      contact_email: values.contact_email || "",
-      smtp_host: values.smtp_host,
-      smtp_port: String(values.smtp_port),
-      smtp_secure: values.smtp_secure ? "true" : "false",
-      smtp_user: values.smtp_user,
-      mail_from: values.mail_from,
-    };
-    if (values.smtp_pass) payload.smtp_pass = values.smtp_pass;
+  const fetchSettings = async () => {
     try {
-      await api.put("/api/settings", payload);
-      toast.success("Settings saved");
-      if (values.smtp_pass) setPassSet(true);
-      form.setValue("smtp_pass", "");
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/settings`);
+      if (res.ok) {
+        const data = await res.json();
+        setSettings(prev => ({
+            ...prev,
+            ...data
+        }));
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Could not save settings");
+      console.error('Failed to load settings', error);
     }
-  }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setSettings(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+    setMessage('');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      });
+      if (res.ok) {
+        setMessage('Settings saved successfully!');
+      } else {
+        setMessage('Error saving settings.');
+      }
+    } catch (error) {
+      setMessage('Error saving settings.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="grid max-w-2xl gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Contact</CardTitle>
-          <CardDescription>Shown in the header, booking page, and WhatsApp button. Empty fields show demo text.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1 sm:col-span-2">
-            <Label>WhatsApp number</Label>
-            <Input {...form.register("whatsapp")} placeholder="+1 555 123 4567" />
-            {form.formState.errors.whatsapp && <p className="text-sm text-destructive">{form.formState.errors.whatsapp.message}</p>}
-          </div>
-          <div className="space-y-1">
-            <Label>Phone</Label>
-            <Input {...form.register("contact_phone")} placeholder="Uses the WhatsApp number when empty" />
-          </div>
-          <div className="space-y-1">
-            <Label>Email</Label>
-            <Input type="email" {...form.register("contact_email")} placeholder="reservations@yourdomain.com" />
-            {form.formState.errors.contact_email && <p className="text-sm text-destructive">{form.formState.errors.contact_email.message}</p>}
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Mailer</CardTitle>
-          <CardDescription>Used for welcome mail, lead mail, and password reset. A blank password keeps the one already saved.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1 sm:col-span-2">
-            <Label>SMTP host</Label>
-            <Input {...form.register("smtp_host")} placeholder="smtp.gmail.com" />
-            {form.formState.errors.smtp_host && <p className="text-sm text-destructive">{form.formState.errors.smtp_host.message}</p>}
-          </div>
-          <div className="space-y-1">
-            <Label>Port</Label>
-            <Input type="number" {...form.register("smtp_port")} />
-          </div>
-          <div className="flex items-end">
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...form.register("smtp_secure")} /> Secure (SSL)</label>
-          </div>
-          <div className="space-y-1">
-            <Label>SMTP user</Label>
-            <Input {...form.register("smtp_user")} />
-            {form.formState.errors.smtp_user && <p className="text-sm text-destructive">{form.formState.errors.smtp_user.message}</p>}
-          </div>
-          <div className="space-y-1">
-            <Label>SMTP password</Label>
-            <Input type="password" {...form.register("smtp_pass")} placeholder={passSet ? "Saved. Leave blank to keep it" : "App password"} />
-          </div>
-          <div className="space-y-1 sm:col-span-2">
-            <Label>From</Label>
-            <Input {...form.register("mail_from")} placeholder={'D\'LUXE <you@gmail.com>'} />
-            {form.formState.errors.mail_from && <p className="text-sm text-destructive">{form.formState.errors.mail_from.message}</p>}
-          </div>
-        </CardContent>
-      </Card>
-      <Button type="submit" disabled={form.formState.isSubmitting}>Save</Button>
-    </form>
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">System Settings</h1>
+      </div>
+
+      {message && (
+        <div className={`p-4 rounded mb-6 ${message.includes('success') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+          {message}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y divide-gray-100">
+        
+        {/* Contact info setting */}
+        <div className="p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Contact Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
+                <input
+                    type="text"
+                    name="whatsapp_number"
+                    value={settings.whatsapp_number}
+                    onChange={handleChange}
+                    placeholder="+590 690 69 50 79"
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#ea580c] focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">Include country code (e.g. +590)</p>
+                </div>
+            </div>
+        </div>
+
+        {/* Mail Mailer setting */}
+        <div className="p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">SMTP Email Configuration</h2>
+            <p className="text-sm text-gray-500 mb-6">These settings override the .env defaults for the mailing system.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">SMTP Host</label>
+                <input
+                    type="text"
+                    name="smtp_host"
+                    value={settings.smtp_host}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#ea580c] focus:border-transparent"
+                    placeholder="smtp.gmail.com"
+                />
+                </div>
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">SMTP Port</label>
+                <input
+                    type="text"
+                    name="smtp_port"
+                    value={settings.smtp_port}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#ea580c] focus:border-transparent"
+                    placeholder="465"
+                />
+                </div>
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">SMTP Username</label>
+                <input
+                    type="text"
+                    name="smtp_user"
+                    value={settings.smtp_user}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#ea580c] focus:border-transparent"
+                    placeholder="user@example.com"
+                />
+                </div>
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">SMTP Password / App Password</label>
+                <input
+                    type="password"
+                    name="smtp_pass"
+                    value={settings.smtp_pass}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#ea580c] focus:border-transparent"
+                    placeholder="••••••••••••"
+                />
+                </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">From Name & Email</label>
+                <input
+                    type="text"
+                    name="mail_from"
+                    value={settings.mail_from}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#ea580c] focus:border-transparent"
+                    placeholder="&quot;D'LUXE&quot; <no-reply@dluxe.com>"
+                />
+                </div>
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Use Secure Connection (SSL/TLS)</label>
+                <select
+                    name="smtp_secure"
+                    value={settings.smtp_secure}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#ea580c] focus:border-transparent"
+                >
+                    <option value="true">Yes (True)</option>
+                    <option value="false">No (False)</option>
+                </select>
+                </div>
+            </div>
+        </div>
+
+        <div className="p-6 bg-gray-50 flex justify-end">
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="px-6 py-2 bg-[#ea580c] text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+          >
+            {isSaving ? 'Saving...' : 'Save Settings'}
+          </button>
+        </div>
+
+      </form>
+    </div>
   );
 }

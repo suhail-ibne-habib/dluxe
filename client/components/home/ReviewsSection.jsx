@@ -64,7 +64,7 @@ export default function ReviewsSection() {
   const otherReviews = reviews.filter(r => r.id !== featuredReview.id).slice(0, 4);
 
   return (
-    <section ref={container} className="py-24 max-w-7xl mx-auto px-4 md:px-12 bg-white overflow-hidden">
+    <section id="reviews" ref={container} className="py-24 max-w-7xl mx-auto px-4 md:px-12 bg-white overflow-hidden scroll-mt-24">
       <div className="flex flex-col lg:flex-row gap-16 items-start">
         {/* Left Hero Review */}
         <div className="review-left lg:w-1/3">

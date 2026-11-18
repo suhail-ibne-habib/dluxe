@@ -1,107 +1,323 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { toast } from "sonner";
-import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { EditSheet } from "@/components/admin/edit-sheet";
-import { Field, RowActions } from "@/components/admin/fields";
-import { featuresToHtml, htmlToFeatures, plainHtml, RichText } from "@/components/admin/rich-text";
-import { RecordTable } from "@/components/admin/record-table";
-import { useList } from "@/components/admin/use-list";
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, Trash2, Edit, Check, X, GripVertical, Eye, Image as ImageIcon } from 'lucide-react';
+import Link from 'next/link';
+import ImageUploader from '@/components/ui/ImageUploader';
 
-const schema = z.object({
-  name: z.string().min(2, "Name is required"),
-  basePrice: z.coerce.number().min(0, "Price is required"),
-  description: z.string().optional(),
-  features: z.string().optional(),
-  isActive: z.boolean(),
-  isPopular: z.boolean(),
-});
+export default function PackagesAdmin() {
+  const [packages, setPackages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPackage, setEditingPackage] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    basePrice: '',
+    description: '',
+    features: [''],
+    isActive: true,
+    isPopular: false,
+    image: '',
+    order: 0
+  });
 
-export default function PackagesPage() {
-  const { rows, loading, reload } = useList("/api/packages");
-  const [editing, setEditing] = useState(null);
-  const form = useForm({ resolver: zodResolver(schema), defaultValues: { isActive: true, isPopular: false } });
+  const fetchPackages = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/packages`);
+      if (res.ok) {
+        const data = await res.json();
+        setPackages(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch packages:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (!editing) return;
-    if (editing === "new") {
-      form.reset({ name: "", basePrice: 0, description: "", features: "", isActive: true, isPopular: false });
-      return;
-    }
-    form.reset({
-      name: editing.name || "",
-      basePrice: Number(editing.basePrice || 0),
-      description: editing.description || "",
-      features: featuresToHtml(editing.features),
-      isActive: Boolean(editing.isActive),
-      isPopular: Boolean(editing.isPopular),
-    });
-  }, [editing, form]);
+    fetchPackages();
+  }, []);
 
-  async function onSubmit(values) {
-    const body = {
-      ...values,
-      description: plainHtml(values.description),
-      features: htmlToFeatures(values.features),
+  const handleOpenModal = (p = null) => {
+    if (p) {
+      setEditingPackage(p);
+      setFormData({
+        name: p.name,
+        basePrice: p.basePrice,
+        description: p.description || '',
+        features: p.features && p.features.length > 0 ? p.features : [''],
+        isActive: p.isActive,
+        isPopular: p.isPopular || false,
+        image: p.image || '',
+        order: p.order || 0
+      });
+    } else {
+      setEditingPackage(null);
+      setFormData({
+        name: '',
+        basePrice: '',
+        description: '',
+        features: [''],
+        isActive: true,
+        isPopular: false,
+        image: '',
+        order: packages.length
+      });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingPackage(null);
+  };
+
+  const handleFeatureChange = (index, value) => {
+    const newFeatures = [...formData.features];
+    newFeatures[index] = value;
+    setFormData({ ...formData, features: newFeatures });
+  };
+
+  const addFeature = () => {
+    setFormData({ ...formData, features: [...formData.features, ''] });
+  };
+
+  const removeFeature = (index) => {
+    const newFeatures = formData.features.filter((_, i) => i !== index);
+    setFormData({ ...formData, features: newFeatures.length > 0 ? newFeatures : [''] });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const method = editingPackage ? 'PATCH' : 'POST';
+    const url = editingPackage ? `/api/packages/${editingPackage._id}` : '/api/packages';
+
+    // Clean up empty features
+    const submissionData = {
+      ...formData,
+      features: formData.features.filter(f => f.trim() !== '')
     };
-    try {
-      if (editing === "new") await api.post("/api/packages", body);
-      else await api.put(`/api/packages/${editing.id}`, body);
-      toast.success(editing === "new" ? "Package created" : "Package updated");
-      setEditing(null);
-      reload();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Could not save the package");
-    }
-  }
 
-  async function remove(id) {
-    if (!confirm("Delete this package?")) return;
     try {
-      await api.delete(`/api/packages/${id}`);
-      toast.success("Package deleted");
-      reload();
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submissionData)
+      });
+
+      if (res.ok) {
+        handleCloseModal();
+        fetchPackages();
+      } else {
+        const err = await res.json();
+        alert(err.message || 'Error saving package');
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Could not delete the package");
+      console.error('Save error:', error);
     }
-  }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this service level? It may affect existing bookings.')) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/packages/${id}`, { method: 'DELETE' });
+      if (res.ok) fetchPackages();
+    } catch (error) {
+      console.error('Delete error:', error);
+    }
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end"><Button onClick={() => setEditing("new")}>Add package</Button></div>
-      <RecordTable
-        loading={loading}
-        rows={rows}
-        empty="No packages."
-        columns={[
-          { key: "name", header: "Name", cell: (row) => row.name },
-          { key: "price", header: "Base price", cell: (row) => `€${Number(row.basePrice || 0).toLocaleString()}` },
-          { key: "active", header: "Active", cell: (row) => row.isActive ? "Yes" : "No" },
-          { key: "orders", header: "Orders", cell: (row) => row.totalOrders || 0 },
-          { key: "actions", header: "", className: "text-right", cell: (row) => <RowActions onEdit={() => setEditing(row)} onDelete={() => remove(row.id)} /> },
-        ]}
-      />
-      <EditSheet open={!!editing} title={editing === "new" ? "Add package" : "Edit package"} description="Use the editor for the description and the included features." className="data-[side=right]:sm:max-w-2xl" onClose={() => setEditing(null)}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-3">
-          <Field label="Name" error={form.formState.errors.name?.message}><Input {...form.register("name")} /></Field>
-          <Field label="Base price" error={form.formState.errors.basePrice?.message}><Input type="number" step="0.01" {...form.register("basePrice")} /></Field>
-          <Field label="Description">
-            <Controller name="description" control={form.control} render={({ field }) => <RichText value={field.value} onChange={field.onChange} placeholder="Package details" />} />
-          </Field>
-          <Field label="Features">
-            <Controller name="features" control={form.control} render={({ field }) => <RichText value={field.value} onChange={field.onChange} placeholder="Add a bullet for each included feature" />} />
-          </Field>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...form.register("isActive")} /> Active</label>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...form.register("isPopular")} /> Popular</label>
-          <Button type="submit" disabled={form.formState.isSubmitting}>Save changes</Button>
-        </form>
-      </EditSheet>
+    <div className="space-y-8 p-4 md:p-8">
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-4xl font-black tracking-tight text-gray-900 uppercase italic">Service Packages</h1>
+          <p className="text-gray-500 mt-2 font-medium">Define service levels, pricing, and premium features.</p>
+        </div>
+        <button
+          onClick={() => handleOpenModal()}
+          className="bg-gray-900 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-orange-600 transition-all shadow-lg hover:shadow-orange-500/20 active:scale-95"
+        >
+          <Plus className="h-5 w-5" />
+          Create Level
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {loading ? (
+          <div className="col-span-full py-20 text-center text-gray-400 font-bold uppercase tracking-widest animate-pulse">
+            Syncing catalog...
+          </div>
+        ) : packages.map((p) => (
+          <div key={p._id} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-gray-200/50 transition-all group overflow-hidden flex flex-col">
+            {p.image && (
+              <div className="h-44 w-full relative overflow-hidden bg-gray-100">
+                <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+              </div>
+            )}
+            <div className="p-8 flex-1 flex flex-col">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-2xl font-black text-gray-900 uppercase italic leading-none">{p.name}</h3>
+                    {p.isPopular && (
+                      <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[8px] font-black uppercase tracking-widest rounded-full">Popular</span>
+                    )}
+                  </div>
+                  <p className="text-[#ea580c] font-black text-3xl mt-2 tracking-tighter">
+                    <span className="text-sm font-bold text-gray-400 mr-1 uppercase">USD</span> ${p.basePrice}
+                  </p>
+                  <div className="mt-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <span>{p.totalOrders || 0} Orders</span>
+                    <span>•</span>
+                    <span className="text-gray-500">${Number(p.totalRevenue || 0).toLocaleString()} Rev</span>
+                  </div>
+                </div>
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Link href={`/admin/packages/${p._id || p.id}`} className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-xl transition-colors"><Eye className="h-4 w-4" /></Link>
+                  <button onClick={() => handleOpenModal(p)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"><Edit className="h-4 w-4" /></button>
+                  <button onClick={() => handleDelete(p._id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"><Trash2 className="h-4 w-4" /></button>
+                </div>
+              </div>
+
+              <div className="space-y-3 mb-8">
+                {(p.features || []).slice(0, 4).map((f, i) => (
+                  <div key={i} className="flex items-center gap-3 text-sm text-gray-600 font-medium">
+                    <div className="w-5 h-5 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
+                      <Check className="h-3 w-3 text-orange-600" />
+                    </div>
+                    {f}
+                  </div>
+                ))}
+                {(p.features || []).length > 4 && (
+                  <p className="text-xs text-gray-400 font-bold uppercase pl-8">+{(p.features || []).length - 4} more features</p>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between pt-6 border-t border-gray-50">
+                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${p.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  }`}>
+                  {p.isActive ? 'Active' : 'Disabled'}
+                </span>
+                <span className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">Order: {p.order}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-10 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+              <div>
+                <h2 className="text-3xl font-black text-gray-900 uppercase italic">{editingPackage ? 'Edit Level' : 'New Service Level'}</h2>
+                <p className="text-gray-500 text-sm font-medium mt-1">Configure pricing and premium features.</p>
+              </div>
+              <button onClick={handleCloseModal} className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-all">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-10 max-h-[70vh] overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Package Name</label>
+                    <input
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="e.g. VIP Terminal"
+                      className="w-full h-14 px-5 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-orange-500 outline-none font-bold text-gray-900"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Base Price (USD)</label>
+                    <input
+                      required
+                      type="number"
+                      value={formData.basePrice}
+                      onChange={(e) => setFormData({ ...formData, basePrice: e.target.value })}
+                      placeholder="850"
+                      className="w-full h-14 px-5 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-orange-500 outline-none font-bold text-gray-900"
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <ImageUploader
+                      value={formData.image}
+                      onChange={(url) => setFormData({ ...formData, image: url })}
+                      label="Service Image (Upload from Computer)"
+                      description="Upload a photo from your computer or paste a URL"
+                      previewHeight="h-36"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-4 py-4">
+                    <div className="flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, isActive: !formData.isActive })}
+                        className={`w-14 h-8 rounded-full transition-all relative ${formData.isActive ? 'bg-orange-600' : 'bg-gray-200'}`}
+                      >
+                        <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${formData.isActive ? 'right-1' : 'left-1'}`} />
+                      </button>
+                      <span className="text-sm font-black text-gray-900 uppercase">Service {formData.isActive ? 'Active' : 'Disabled'}</span>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, isPopular: !formData.isPopular })}
+                        className={`w-14 h-8 rounded-full transition-all relative ${formData.isPopular ? 'bg-blue-600' : 'bg-gray-200'}`}
+                      >
+                        <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${formData.isPopular ? 'right-1' : 'left-1'}`} />
+                      </button>
+                      <span className="text-sm font-black text-gray-900 uppercase">Mark as Popular</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Features List</label>
+                    <button type="button" onClick={addFeature} className="text-xs font-black text-orange-600 uppercase tracking-widest hover:text-orange-700">+ Add</button>
+                  </div>
+                  <div className="space-y-3">
+                    {formData.features.map((f, i) => (
+                      <div key={i} className="flex gap-2 group">
+                        <input
+                          value={f}
+                          onChange={(e) => handleFeatureChange(i, e.target.value)}
+                          placeholder="Include feature..."
+                          className="flex-1 h-12 px-4 bg-gray-100 border-none rounded-xl focus:ring-2 focus:ring-orange-500 outline-none font-bold text-gray-900 text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeFeature(i)}
+                          className="p-3 text-gray-300 hover:text-red-500 transition-colors"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-4 mt-12 pt-8 border-t border-gray-50">
+                <button type="button" onClick={handleCloseModal} className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">Discard</button>
+                <button type="submit" className="px-10 py-4 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-orange-600 transition-all shadow-xl shadow-gray-200 active:scale-95">
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

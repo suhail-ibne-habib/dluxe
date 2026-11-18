@@ -125,9 +125,9 @@ export default function AirportPackages({ airportId, airportName }) {
                 {/* Package Image / Icon Header */}
                 <div className="h-56 relative overflow-hidden">
                   <img 
-                    src={isSilver ? "https://images.unsplash.com/photo-1542296332-2e4473faf563?q=80&w=800&auto=format&fit=crop" : 
+                    src={pkg.image || (isSilver ? "https://images.unsplash.com/photo-1542296332-2e4473faf563?q=80&w=800&auto=format&fit=crop" : 
                          isGold ? "https://images.unsplash.com/photo-1530521954074-e64f6810b32d?q=80&w=800&auto=format&fit=crop" : 
-                         "https://images.unsplash.com/photo-1571210862729-78a52d3779a2?q=80&w=800&auto=format&fit=crop"} 
+                         "https://images.unsplash.com/photo-1571210862729-78a52d3779a2?q=80&w=800&auto=format&fit=crop")} 
                     alt={pkg.name}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />

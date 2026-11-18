@@ -1,0 +1,58 @@
+{
+  "kind": "collectionType",
+  "collectionName": "reservations",
+  "info": {
+    "singularName": "reservation",
+    "pluralName": "reservations",
+    "displayName": "Reservations"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "users": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user",
+      "mappedBy": "reservation"
+    },
+    "route": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::airport.airport",
+      "required": true
+    },
+    "departure": {
+      "type": "datetime",
+      "required": true
+    },
+    "package": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::package.package",
+      "required": true
+    },
+    "reservation_status": {
+      "type": "enumeration",
+      "required": true,
+      "default": "Pending",
+      "enum": [
+        "Pending",
+        "Confirmed",
+        "Cancelled",
+        "Completed"
+      ]
+    },
+    "payment": {
+      "type": "enumeration",
+      "required": true,
+      "default": "Unpaid",
+      "enum": [
+        "Unpaid",
+        "Refunded",
+        "Paid"
+      ]
+    }
+  }
+}

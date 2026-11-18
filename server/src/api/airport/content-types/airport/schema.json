@@ -1,0 +1,42 @@
+{
+  "kind": "collectionType",
+  "collectionName": "airports",
+  "info": {
+    "singularName": "airport",
+    "pluralName": "airports",
+    "displayName": "Airports"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "airportName": {
+      "type": "string",
+      "required": true
+    },
+    "airportNote": {
+      "type": "blocks"
+    },
+    "landing_page_link": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::page.page",
+      "inversedBy": "airports"
+    },
+    "location": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::location.location",
+      "inversedBy": "airports"
+    },
+    "iata_code": {
+      "type": "string"
+    },
+    "Available_Packages": {
+      "type": "component",
+      "component": "pricing.package-price-override",
+      "repeatable": true
+    }
+  }
+}

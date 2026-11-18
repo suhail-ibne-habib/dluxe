@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_pricing_package_price_overrides",
+  "info": {
+    "displayName": "Package Price Override",
+    "icon": "question"
+  },
+  "options": {},
+  "attributes": {
+    "package": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::package.package"
+    },
+    "Updated_Price": {
+      "type": "decimal"
+    },
+    "isEnabled": {
+      "type": "boolean",
+      "required": true,
+      "default": false
+    }
+  },
+  "config": {}
+}
